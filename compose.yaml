@@ -1,0 +1,30 @@
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    env_file:
+      - ${ENV_FILE}
+
+
+  frontend:
+    build: ./
+    container_name: kidsyncapp
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+    ports:
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+      - "8081:8081"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: ["npx", "expo", "start", "--tunnel"]
+    env_file:
+      - ${ENV_FILE}      
+    depends_on:
+      - mongo
