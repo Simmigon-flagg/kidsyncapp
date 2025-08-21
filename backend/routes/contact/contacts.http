@@ -1,0 +1,23 @@
+###
+POST http://192.168.1.238:3000/api/v1/contacts
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjgyNjc2ZWY3NTUwNGRjNTIzNWI1MWVlIiwiaWF0IjoxNzQ3MzUxMzA1LCJleHAiOjE3NDg2NDczMDV9.lmCz1aeekRyCPUxkDt44obOG639T5_EVHrc-dDrINOQ
+
+{
+    "name":"Phil"
+}
+
+###
+GET http://192.168.1.238:3000/api/v1/contacts?page=1&limit=5
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjgyNjc2ZWY3NTUwNGRjNTIzNWI1MWVlIiwiaWF0IjoxNzQ3MzUxMzA1LCJleHAiOjE3NDg2NDczMDV9.lmCz1aeekRyCPUxkDt44obOG639T5_EVHrc-dDrINOQ
+
+
+###
+GET http://localhost:3000/api/v1/contacts
+Content-Type: application/json
+
+{
+    "email":"phil@gmail.com",
+    "password":"123"
+}
