@@ -1,18 +1,15 @@
-import { View, Text } from 'react-native'
-import React, { useState } from 'react'
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '../../store/authStore.js';
-import styles from "../../assets/styles/profile.styles.js"
+import { View } from 'react-native';
 import ProfileHeader from '../../components/ProfileHeader.jsx';
 import LogoutButton from '../../components/LogoutButton.jsx';
+import styles from "../../assets/styles/profile.styles.js";
 
-export default function ProfileLayout() {
-  const {token} = useAuthStore()
-
+export default function ProfileLayout({ children }) {
   return (
     <View style={styles.container}>
       <ProfileHeader />
       <LogoutButton />
+      {/* Render the nested screen here */}
+      {children}
     </View>
-  )
+  );
 }

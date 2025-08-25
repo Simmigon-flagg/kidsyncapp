@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { Platform } from 'react-native';
+
+const HOST = Platform.OS === 'android'
+  ? '10.0.2.2:3000'       // Android emulator
+  : '192.168.1.238:3000'; // iOS / Web / physical devices
+
+const API_URL = `http://${HOST}`;
+
 export const useAuthStore = create((set) => ({
   user: null,
   token: null,
@@ -10,7 +18,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true });
     try {
       const response = await fetch(
-        "http://localhost:3000/api/v1/auth/register",
+        "/api/v1/auth/register",
         {
           method: "POST",
           headers: {
@@ -58,7 +66,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true });
     try {
       // Send the Google access token to your backend
-      const response = await fetch("http://localhost:3000/api/v1/auth/google", {
+      const response = await fetch(`${API_URL}/api/v1/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,7 +92,7 @@ export const useAuthStore = create((set) => ({
   login: async (email, password) => {
     set({ isLoading: true });
     try {
-      const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +137,7 @@ export const useAuthStore = create((set) => ({
     console.log("auth provider forgotPassword:", email);
     try {
       const response = await fetch(
-        "http://localhost:3000/api/v1/auth/forgot-password",
+        `${API_URL}/api/v1/auth/forgot-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -156,7 +164,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true });
     try {
       const response = await fetch(
-        `http://localhost:3000/api/v1/auth/reset-password`,
+        `${API_URL}/api/v1/auth/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
