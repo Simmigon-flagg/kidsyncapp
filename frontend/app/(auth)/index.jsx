@@ -16,8 +16,8 @@ import COLORS from "../../constants/colors";
 import styles from "../../assets/styles/login.styles";
 
 export default function Login() {
-const [email, setEmail] = useState("dad@gmail.com");   // default email
-const [password, setPassword] = useState("123");       // default password
+  const [email, setEmail] = useState("kaipherllc@gmail.com"); // default email
+  const [password, setPassword] = useState("abc"); // default password
 
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, login } = useAuthStore();
@@ -28,7 +28,10 @@ const [password, setPassword] = useState("123");       // default password
 
   const handleLogin = async () => {
     if (!email || !password) {
-      return Alert.alert("Missing Fields", "Please enter both email and password.");
+      return Alert.alert(
+        "Missing Fields",
+        "Please enter both email and password."
+      );
     }
 
     const result = await login(email, password);
@@ -84,7 +87,6 @@ const [password, setPassword] = useState("123");       // default password
                   placeholder="Enter your password"
                   placeholderTextColor={COLORS.placeholderText}
                   value={password}
-                  
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                 />
@@ -110,6 +112,14 @@ const [password, setPassword] = useState("123");       // default password
                 <Text style={styles.buttonText}>Login</Text>
               )}
             </TouchableOpacity>
+            {/* Forgot Password link */}
+            <View style={{ alignItems: "center", marginTop: 8 }}>
+              <Link href="/forgot-password" asChild>
+                <TouchableOpacity>
+                  <Text style={styles.link}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
 
             {/* Footer */}
             <View style={styles.footer}>

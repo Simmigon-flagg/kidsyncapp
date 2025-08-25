@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
   },
-  username: {
+  name: {
     fontSize: 20,
     fontWeight: "700",
     color: COLORS.textPrimary,

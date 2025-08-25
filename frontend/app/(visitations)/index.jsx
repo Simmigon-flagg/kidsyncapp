@@ -22,7 +22,7 @@ import Loader from '../../components/Loader';
 export default function Home() {
     const { token } = useAuthStore();
 
-    const [contacts, setContacts] = useState([]);
+    const [visitations, setVisitations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
@@ -39,8 +39,8 @@ export default function Home() {
     const [newName, setNewName] = useState('');
     const [newPhone, setNewPhone] = useState('');
 
-    // Fetch contacts
-    const fetchContacts = async (pageNumber = 1, refresh = false) => {
+    // Fetch visitations
+    const fetchVisitations = async (pageNumber = 1, refresh = false) => {
         try {
             if (refresh) {
                 setRefreshing(true);
@@ -49,7 +49,7 @@ export default function Home() {
             }
 
             const response = await fetch(
-                `http://192.168.1.238:3000/api/v1/contacts?page=${pageNumber}&limit=5`,
+                `http://192.168.1.238:3000/api/v1/visitations?page=${pageNumber}&limit=5`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -58,22 +58,22 @@ export default function Home() {
             );
 
             const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Failed to fetch contacts');
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch visitations');
 
             if (refresh || pageNumber === 1) {
-                setContacts(data.contacts);
+                setVisitations(data.visitations);
             } else {
-                setContacts((prev) => {
-                    const existingIds = new Set(prev.map((contact) => contact._id));
-                    const newContacts = data.contacts.filter((contact) => !existingIds.has(contact._id));
-                    return [...prev, ...newContacts];
+                setVisitations((prev) => {
+                    const existingIds = new Set(prev.map((visitation) => visitation._id));
+                    const newVisitation = data.visitations.filter((visitation) => !existingIds.has(visitation._id));
+                    return [...prev, ...newVisitation];
                 });
             }
 
             setHasMore(pageNumber < data.totalPages);
             setPage(pageNumber);
         } catch (error) {
-            console.log('Error fetching contacts:', error);
+            console.log('Error fetching visitations:', error);
 
         } finally {
             setLoading(false);
@@ -82,23 +82,23 @@ export default function Home() {
     };
 
     useEffect(() => {
-        fetchContacts();
+        fetchVisitations();
     }, []);
 
     useFocusEffect(
         useCallback(() => {
-            fetchContacts(1, true);
+            fetchVisitations(1, true);
         }, [])
     );
 
     const handleLoadMore = () => {
         if (hasMore && !loading && !refreshing) {
-            fetchContacts(page + 1);
+            fetchVisitations(page + 1);
         }
     };
 
     const handleRefresh = () => {
-        fetchContacts(1, true);
+        fetchVisitations(1, true);
     };
 
     // Edit contact modal handlers
@@ -111,7 +111,7 @@ export default function Home() {
 
     const handleUpdate = async () => {
         try {
-            const response = await fetch(`http://192.168.1.238:3000/api/v1/contacts/${editingContact._id}`, {
+            const response = await fetch(`http://192.168.1.238:3000/api/v1/visitations/${editingContact._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export default function Home() {
             setEditingContact(null);
 
             // Update UI immediately by updating the contact in the list
-            setContacts((prev) =>
+            setVisitations((prev) =>
                 prev.map((c) => (c._id === data.contact._id ? data.contact : c))
             );
         } catch (err) {
@@ -140,7 +140,7 @@ export default function Home() {
         try {
             const newContactData = { name: newName, phone: newPhone };
 
-            const response = await fetch('http://192.168.1.238:3000/api/v1/contacts', {
+            const response = await fetch('http://192.168.1.238:3000/api/v1/visitations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -152,8 +152,8 @@ export default function Home() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Failed to add contact');
 
-            // Prepend new contact to contacts state
-            setContacts((prev) => [data.contact, ...prev]);
+            // Prepend new contact to visitations state
+            setVisitations((prev) => [data.contact, ...prev]);
 
             // Reset form and close modal
             setNewName('');
@@ -207,7 +207,7 @@ export default function Home() {
                 <ActivityIndicator size="large" style={{ marginTop: 20 }} />
             ) : (
                 <FlatList
-                    data={contacts}
+                    data={visitations}
                     renderItem={renderItem}
                     keyExtractor={(item) => item?._id}
                     contentContainerStyle={styles.listContainer}
@@ -218,17 +218,17 @@ export default function Home() {
                     ListHeaderComponent={<View
                         style={styles.header}>
                         <Text
-                            style={styles.headerTitle}>Contacts
+                            style={styles.headerTitle}>Visitations
                         </Text>
                         <Text
-                            style={styles.headerSubtitle}>Shared Contacts</Text>
+                            style={styles.headerSubtitle}>Shared Visitations</Text>
                     </View>
                     }
-                    ListFooterComponent={hasMore && contacts.length > 0 ? <ActivityIndicator style={{ marginVertical: 10 }} /> : null}
+                    ListFooterComponent={hasMore && visitations.length > 0 ? <ActivityIndicator style={{ marginVertical: 10 }} /> : null}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Ionicons name="book-outline" size={60} color={COLORS.textSecondary} />
-                            <Text style={styles.emptyText}>No Contacts</Text>
+                            <Text style={styles.emptyText}>No Visitations</Text>
                         </View>
                     }
 

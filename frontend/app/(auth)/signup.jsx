@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore.js';
 
 export default function Signup() {
-  const [username, setUsername] = useState('Dad');
+  const [name, setName] = useState('Dad');
   const [email, setEmail] = useState('dad@gmail.com');
   const [password, setPassword] = useState('123');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +27,7 @@ export default function Signup() {
   const handleSignUp = async () => {
 
 
-    const result = await register(username, email, password)
+    const result = await register(name, email, password)
     console.log("result", result)
 
     if (!result.success) Alert.alert("Error", result.message)
@@ -53,7 +53,7 @@ export default function Signup() {
           <View style={styles.formContainer}>
             {/* Username */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={styles.label}>Name</Text>
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="person-outline"
@@ -65,8 +65,8 @@ export default function Signup() {
                   style={styles.input}
                   placeholder="Dad, Mom ..."
                   placeholderTextColor={COLORS.placeholderText}
-                  value={username}
-                  onChangeText={setUsername}
+                  value={name}
+                  onChangeText={setName}
                   autoCapitalize="none"
                 />
               </View>

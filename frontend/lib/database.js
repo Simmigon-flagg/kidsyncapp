@@ -4,7 +4,7 @@ import { GridFSBucket } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) throw new Error("Please define MONGODB_URI");
-console.log("Connecting to ", MONGODB_URI)
+console.log()
 global._mongoose = global._mongoose || { conn: null, promise: null, bucket: null };
 
 export async function connectToDatabase() {

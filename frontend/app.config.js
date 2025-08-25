@@ -20,7 +20,7 @@ module.exports = () => ({
     },
     web: {
       bundler: "metro",
-      output: "server",
+      output: "static",
       favicon: "./assets/images/favicon.png"
     },
     plugins: [

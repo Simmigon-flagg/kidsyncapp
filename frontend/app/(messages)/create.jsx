@@ -66,7 +66,7 @@ export default function Create() {
                 // const fileType = uriParts[uriParts.length - 1];
                 // const imageType = fileType ? `image/${fileType.toLowerCase()}` : "image/jpeg";
                 // const imageDataUrl = `data:${imageType}; base64, ${imageBase64}`;
-                const response = await fetch(`http://localhost:3000/api/v1/contacts`, {
+                const response = await fetch(`http://192.168.1.238:3000/api/v1/contacts`, {
                     method: "POST",
                     headers: {
                         Authorization: `Bearer ${token}`,

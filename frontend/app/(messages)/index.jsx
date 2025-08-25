@@ -49,7 +49,7 @@ export default function Home() {
             }
 
             const response = await fetch(
-                `http://192.168.1.238:3000/api/v1/contacts?page=${pageNumber}&limit=5`,
+                `http://192.168.1.238:3000/api/v1/messenger?page=${pageNumber}&limit=5`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -218,17 +218,17 @@ export default function Home() {
                     ListHeaderComponent={<View
                         style={styles.header}>
                         <Text
-                            style={styles.headerTitle}>Contacts
+                            style={styles.headerTitle}>Messenger
                         </Text>
                         <Text
-                            style={styles.headerSubtitle}>Shared Contacts</Text>
+                            style={styles.headerSubtitle}>Messages </Text>
                     </View>
                     }
                     ListFooterComponent={hasMore && contacts.length > 0 ? <ActivityIndicator style={{ marginVertical: 10 }} /> : null}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Ionicons name="book-outline" size={60} color={COLORS.textSecondary} />
-                            <Text style={styles.emptyText}>No Contacts</Text>
+                            <Text style={styles.emptyText}>No messages</Text>
                         </View>
                     }
 
