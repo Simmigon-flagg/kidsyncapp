@@ -11,15 +11,10 @@ export function CustomDrawerContent(props) {
       <DrawerItem
         label="Home"
         icon={({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />}
-        onPress={() => navigation.push("/(tabs)")}
+        onPress={() => navigation.push("/(dashboard)")}
       />
 
-      {/* Profile inside tabs */}
-      <DrawerItem
-        label="Profile"
-        icon={({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />}
-        onPress={() => navigation.push("/(tabs)/profile")}
-      />
+
 
       {/* Documents */}
       <DrawerItem

@@ -16,9 +16,9 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore.js';
 
 export default function Signup() {
-  const [name, setName] = useState('Dad');
-  const [email, setEmail] = useState('dad@gmail.com');
-  const [password, setPassword] = useState('123');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, register } = useAuthStore()
 
@@ -28,7 +28,7 @@ export default function Signup() {
 
 
     const result = await register(name, email, password)
-    console.log("result", result)
+    
 
     if (!result.success) Alert.alert("Error", result.message)
   };

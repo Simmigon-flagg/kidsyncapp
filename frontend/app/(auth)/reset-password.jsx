@@ -9,7 +9,7 @@ export default function ResetPasswordScreen() {
   
  
  const { token } = useLocalSearchParams()
-  console.log("token", token)
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');

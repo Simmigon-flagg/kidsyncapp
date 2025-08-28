@@ -1,23 +1,30 @@
 import jwt from "jsonwebtoken";
 import Users from "../models/User.js";
+import { connectToDatabase } from "../lib/database.js";
 
 const protectedRoute = async (request, response, next) => {
-    try {
-        const token = request.header("Authorization").replace("Bearer ", "")
-        if (!token) return response.status(401).json({ message: "No authentication toekn, access denied" })
+  await connectToDatabase();
+  try {
+    const authHeader = request.header("Authorization");
+    if (!authHeader)
+      return response
+        .status(401)
+        .json({ message: "No authentication token, access denied" });
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        const user = await Users.findById(decoded.user_id).select("-password")
-        if (!user) return response.status(401).json({ message: "Invalid Token" })
+    const user = await Users.findById(decoded.user_id).select(
+      "-password -contacts"
+    );
+    
+    if (!user) return response.status(401).json({ message: "Invalid Token" });
 
-        request.user = user
-        next();
-
-
-    } catch (error) {
-
-    }
-}
+    request.user = user;
+    next();
+  } catch (error) {
+    return response.status(401).json({ message: "Invalid or expired token" });
+  }
+};
 
 export default protectedRoute;

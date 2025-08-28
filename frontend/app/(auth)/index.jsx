@@ -16,8 +16,8 @@ import COLORS from "../../constants/colors";
 import styles from "../../assets/styles/login.styles";
 
 export default function Login() {
-  const [email, setEmail] = useState("kaipherllc@gmail.com"); // default email
-  const [password, setPassword] = useState("abc"); // default password
+  const [email, setEmail] = useState(""); // default email
+  const [password, setPassword] = useState(""); // default password
 
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, login } = useAuthStore();
@@ -35,6 +35,8 @@ export default function Login() {
     }
 
     const result = await login(email, password);
+    setEmail("")
+    setPassword("")
     if (!result.success) {
       Alert.alert("Login Failed", result.error);
     }

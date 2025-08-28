@@ -12,6 +12,7 @@ const UserSchema = new Schema(
     },
     name: String,
     image: String, 
+    profileImage: String, 
     imageId: {
       type: Schema.Types.ObjectId,
       ref: 'uploads.files',

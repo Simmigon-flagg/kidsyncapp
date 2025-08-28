@@ -15,7 +15,7 @@ const generateToken = (user_id) => {
 router.post("/register", async (req, res) => {
   await connectToDatabase();
   try {
-    console.log(req.body)
+   
     const { email, name, password } = req.body;
    
     if (!email || !name || !password) {
@@ -45,7 +45,8 @@ router.post("/register", async (req, res) => {
         name: user.name,
         email: user.email,
         createdAt: user.createdAt,
-        imageId: user.profileImage 
+        imageId: user.profileImage,
+        profileImage: user.profileImage 
       },
       message: "Sign up successful",
     });
@@ -81,7 +82,8 @@ router.post("/login", async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email,
+        email: user.email,        
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });

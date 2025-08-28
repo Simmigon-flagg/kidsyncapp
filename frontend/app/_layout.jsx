@@ -17,13 +17,15 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const { user, token, checkAuth } = useAuthStore();
-  const [show, setShow] = useState("none");
   const [authChecked, setAuthChecked] = useState(false);
 
+  const [show, setShow] = useState("none");
+
+  // Bootstrap auth once
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        await checkAuth(); // might throw
+        await checkAuth();
       } catch (err) {
         console.error("checkAuth failed:", err);
       } finally {
@@ -33,34 +35,39 @@ export default function RootLayout() {
     bootstrap();
   }, []);
 
+  // Show/hide drawer items based on login
   useEffect(() => {
-    if (!authChecked || segments.length === 0) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-    const isSignedIn = !!user && !!token;
-
-    if (!isSignedIn && !inAuthGroup) {
-      router.replace("/(auth)");
-    } else if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)"); // default landing after login
-    }
-  }, [user, token, segments, authChecked]);
-
-  useEffect(() => {
-    if (user && token) {
-      setShow("block");
-    } else {
-      setShow("none");
-    }
+    if (user && token) setShow("block");
+    else setShow("none");
   }, [user, token]);
+
+useEffect(() => {
+  if (!authChecked || segments.length === 0) return;
+
+  const inAuthGroup = segments[0] === "(auth)";
+  const isSignedIn = !!user && !!token;
+
+  // Only redirect to auth if not signed in and trying to access protected route
+  if (!isSignedIn && !inAuthGroup) {
+    router.replace("/(auth)");
+    return;
+  }
+
+  // Optional: block login page if signed in
+  if (isSignedIn && inAuthGroup) {
+    router.replace("/(dashboard)");
+    return;
+  }
+
+  // Otherwise, do nothing and stay on current page
+}, [authChecked, segments, user, token]);
+
 
   if (!authChecked) {
     return (
       <SafeAreaProvider>
         <SafeScreen>
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <ActivityIndicator size="large" />
           </View>
         </SafeScreen>
@@ -76,37 +83,25 @@ export default function RootLayout() {
           screenOptions={{ headerShown: true }}
           drawerContent={(props) => (
             <View style={{ flex: 1 }}>
-              <DrawerContentScrollView
-                {...props}
-                contentContainerStyle={{ flexGrow: 1 }}
-              >
+              <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
                 <DrawerItemList {...props} />
               </DrawerContentScrollView>
 
-              {/* Stick logout button at bottom */}
-              {user && token ? (
-                <View
-                  style={{
-                    padding: 16,
-                    borderTopWidth: 1,
-                    borderColor: "#ccc",
-                  }}
-                >
+              {user && token && (
+                <View style={{ padding: 16, borderTopWidth: 1, borderColor: "#ccc" }}>
                   <LogoutButton />
                 </View>
-              ) : null}
+              )}
             </View>
           )}
         >
-          {/* Tabs (home/dashboard area) */}
+          {/* Dashboard & other screens */}
           <Drawer.Screen
-            name="(tabs)"
+            name="(dashboard)"
             options={{
-              drawerLabel: "Home",
-              title: "Home",
-              drawerIcon: ({ size, color }) => (
-                <Ionicons name="home-outline" size={size} color={color} />
-              ),
+              drawerLabel: "Dashboard",
+              title: "Dashboard",
+              drawerIcon: ({ size, color }) => <Ionicons name="home-outline" size={size} color={color} />,
             }}
           />
           <Drawer.Screen
@@ -114,10 +109,8 @@ export default function RootLayout() {
             options={{
               drawerLabel: "Profile",
               title: "Profile",
-              drawerItemStyle: { display: `${show}` },
-              drawerIcon: ({ color, size }) => (
-                <Ionicons name="person-outline" size={size} color={color} />
-              ),
+              drawerItemStyle: { display: show },
+              drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
             }}
           />
           <Drawer.Screen
@@ -125,14 +118,8 @@ export default function RootLayout() {
             options={{
               drawerLabel: "Documents",
               title: "Documents",
-              drawerItemStyle: { display: `${show}` },
-              drawerIcon: ({ size, color }) => (
-                <Ionicons
-                  name="document-text-outline"
-                  size={size}
-                  color={color}
-                />
-              ),
+              drawerItemStyle: { display: show },
+              drawerIcon: ({ size, color }) => <Ionicons name="document-text-outline" size={size} color={color} />,
             }}
           />
           <Drawer.Screen
@@ -140,10 +127,8 @@ export default function RootLayout() {
             options={{
               drawerLabel: "Visitations",
               title: "Visitations",
-              drawerItemStyle: { display: `${show}` },
-              drawerIcon: ({ size, color }) => (
-                <Ionicons name="calendar-outline" size={size} color={color} />
-              ),
+              drawerItemStyle: { display: show },
+              drawerIcon: ({ size, color }) => <Ionicons name="calendar-outline" size={size} color={color} />,
             }}
           />
           <Drawer.Screen
@@ -151,10 +136,8 @@ export default function RootLayout() {
             options={{
               drawerLabel: "Messages",
               title: "Messages",
-              drawerItemStyle: { display: `${show}` },
-              drawerIcon: ({ size, color }) => (
-                <Ionicons name="chatbubble-outline" size={size} color={color} />
-              ),
+              drawerItemStyle: { display: show },
+              drawerIcon: ({ size, color }) => <Ionicons name="chatbubble-outline" size={size} color={color} />,
             }}
           />
           <Drawer.Screen
@@ -162,10 +145,8 @@ export default function RootLayout() {
             options={{
               drawerLabel: "Contacts",
               title: "Contacts",
-              drawerItemStyle: { display: `${show}` },
-              drawerIcon: ({ size, color }) => (
-                <Ionicons name="people-outline" size={size} color={color} />
-              ),
+              drawerItemStyle: { display: show },
+              drawerIcon: ({ size, color }) => <Ionicons name="people-outline" size={size} color={color} />,
             }}
           />
           <Drawer.Screen

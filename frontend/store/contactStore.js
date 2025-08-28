@@ -1,6 +1,9 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export const useContactStore = create((set) => ({
+  contacts: [],
   contactsUpdated: false,
-  setContactsUpdated: (value) => set({ contactsUpdated: value }),
+  setContacts: (contacts) => set({ contacts }),
+  setContactsUpdated: (v) => set({ contactsUpdated: v }),
+  resetContacts: () => set({ contacts: [], contactsUpdated: false }),
 }));

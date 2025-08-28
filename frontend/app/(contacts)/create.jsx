@@ -8,11 +8,15 @@ import * as ImagePicker from "expo-image-picker"
 import * as FileSystem from "expo-file-system"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const BASE_URL = Platform.OS === 'android'
+  ? 'http://10.0.2.2:3000'
+  : 'http://192.168.1.238:3000';
+
 export default function Create() {
-    const [name, setName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
-    const [relationship, setRelationship] = useState("");
+    const [name, setName] = useState("Simmigon");
+    const [phone, setPhone] = useState("123456789");
+    const [email, setEmail] = useState("email@email.com");
+    const [relationship, setRelationship] = useState("Uncle");
     const [rating, setRating] = useState(3);
     const [image, setImage] = useState(null); // to display the selected image
     const [imageBase64, setImageBase64] = useState(null);
@@ -61,28 +65,31 @@ export default function Create() {
             try {
                 setLoading(true)
                 const token = await AsyncStorage.getItem("token")
-          
+               const user = JSON.parse(await AsyncStorage.getItem("user"));
+
+        
                 // const uriParts = image - split(".");
                 // const fileType = uriParts[uriParts.length - 1];
                 // const imageType = fileType ? `image/${fileType.toLowerCase()}` : "image/jpeg";
                 // const imageDataUrl = `data:${imageType}; base64, ${imageBase64}`;
-                const response = await fetch(`http://192.168.1.238:3000/api/v1/contacts`, {
+                const response = await fetch(`${BASE_URL}/api/v1/contacts`, {
                     method: "POST",
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
+                        owner: user._id,
                         name,
                         phone,
                         relationship,
                         email
                     })
                 })
-                const data = response.json()
+                const data = await response.json()
                 if (!response.ok) throw new Error(data.message || "Something went wrong")
-                // Alert.alert("Success", "Your contact was added")
-                console.log("data", data)
+               Alert.alert("Success", "Your contact was added")
+               
                 setName("")
                 router.push("/")
             } catch (error) {

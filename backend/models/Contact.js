@@ -30,6 +30,9 @@ const ContactSchema = new mongoose.Schema({
     relationship: {
         type: String
     },
+    profileImage: {
+        type: String
+    },
 
     
 }, { timestamps: true });

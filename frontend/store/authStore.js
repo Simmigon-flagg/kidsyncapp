@@ -1,35 +1,34 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useContactStore } from "./contactStore";
+import { Platform } from "react-native";
 
-import { Platform } from 'react-native';
-
-const HOST = Platform.OS === 'android'
-  ? '10.0.2.2:3000'       // Android emulator
-  : '192.168.1.238:3000'; // iOS / Web / physical devices
+const HOST =
+  Platform.OS === "android"
+    ? "10.0.2.2:3000" // Android emulator
+    : "192.168.1.238:3000"; // iOS / Web / physical devices
 
 const API_URL = `http://${HOST}`;
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   token: null,
   isLoading: false,
+
   register: async (name, email, password) => {
-    console.log(name, email, password);
+    
     set({ isLoading: true });
     try {
-      const response = await fetch(
-        "/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, email, password }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
       const data = await response.json();
-      console.log(data);
+      
 
       if (!response.ok) throw new Error(data.message || "Something went wrong");
 
@@ -44,7 +43,7 @@ export const useAuthStore = create((set) => ({
       return { success: true, user: data.user, token: data.token };
     } catch (error) {
       set({ isLoading: false });
-      console.log(error);
+      console.error(error);
       return { success: false, message: error.message };
     }
   },
@@ -90,20 +89,18 @@ export const useAuthStore = create((set) => ({
   },
 
   login: async (email, password) => {
+    set({ user: null, token: null });
     set({ isLoading: true });
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Something went wrong");
+
+      // Save user/token
       await AsyncStorage.setItem("user", JSON.stringify(data.user));
       await AsyncStorage.setItem("token", data.token);
       set({ token: data.token, user: data.user, isLoading: false });
@@ -114,10 +111,12 @@ export const useAuthStore = create((set) => ({
       return { success: false, error: error.message };
     }
   },
+
   checkAuth: async () => {
     try {
       const token = await AsyncStorage.getItem("token");
       const userjson = await AsyncStorage.getItem("user");
+
       const user = userjson ? JSON.parse(userjson) : null;
 
       set({ token, user });
@@ -127,23 +126,21 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: async () => {
+    set({ user: null, token: null });
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
-    set({ user: null, token: null });
+
   },
 
   forgotPassword: async (email) => {
     set({ isLoading: true });
-    console.log("auth provider forgotPassword:", email);
+    
     try {
-      const response = await fetch(
-        `${API_URL}/api/v1/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Password reset request failed");
@@ -159,18 +156,14 @@ export const useAuthStore = create((set) => ({
     }
   },
   resetPassword: async (token, newPassword) => {
-    console.log(token);
-    console.log(newPassword);
+
     set({ isLoading: true });
     try {
-      const response = await fetch(
-        `${API_URL}/api/v1/auth/reset-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, password: newPassword }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password: newPassword }),
+      });
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Password reset failed");

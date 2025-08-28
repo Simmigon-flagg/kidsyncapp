@@ -81,7 +81,7 @@ export default function Create() {
                 })
                 const data = response.json()
                 if (!response.ok) throw new Error(data.message || "Something went wrong")
-                // Alert.alert("Success", "Your contact was added")
+                // Alert.alert("Success", "Your document was added")
                 console.log("data", data)
                 setName("")
                 router.push("/")
