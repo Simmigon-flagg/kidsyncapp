@@ -9,7 +9,12 @@ module.exports = () => ({
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      infoPlist: {
+        NSPhotoLibraryUsageDescription: "This app needs access to your photo library to upload images.",
+        NSCameraUsageDescription: "This app needs access to your camera to take photos.",
+        NSPhotoLibraryAddUsageDescription: "This app needs permission to save photos to your library."
+      }
     },
     android: {
       adaptiveIcon: {

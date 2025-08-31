@@ -93,14 +93,24 @@ useEffect(() => {
                 </View>
               )}
             </View>
+
           )}
         >
           {/* Dashboard & other screens */}
           <Drawer.Screen
-            name="(dashboard)"
+            name="(dashboard)/index"
             options={{
               drawerLabel: "Dashboard",
               title: "Dashboard",
+              drawerIcon: ({ size, color }) => <Ionicons name="home-outline" size={size} color={color} />,
+            }}
+          />
+          <Drawer.Screen
+            name="(dashboard)/create"
+            options={{
+              drawerLabel: "Dashboard",
+              title: "Dashboard",
+               drawerItemStyle: { display: "none" },
               drawerIcon: ({ size, color }) => <Ionicons name="home-outline" size={size} color={color} />,
             }}
           />
@@ -154,6 +164,30 @@ useEffect(() => {
             options={{
               drawerLabel: "Login",
               title: "Login",
+              drawerItemStyle: { display: "none" },
+            }}
+          />
+          <Drawer.Screen
+            name="contact/[id]"
+            options={{
+              drawerLabel: "Contact",
+              title: "Contact",
+              drawerItemStyle: { display: "none" },
+            }}
+          />
+          <Drawer.Screen
+            name="contact/[id]/index"
+            options={{
+              drawerLabel: "Contact",
+              title: "Contact",
+              drawerItemStyle: { display: "none" },
+            }}
+          />
+          <Drawer.Screen
+            name="contact/[id]/EditContactModal"
+            options={{
+              drawerLabel: "Contact",
+              title: "Contact",
               drawerItemStyle: { display: "none" },
             }}
           />

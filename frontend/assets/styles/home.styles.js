@@ -118,6 +118,40 @@ emptySubtext: {
   color: '#999',
   marginTop: 8,
 },
+contactRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  backgroundColor: "#fff",
+  borderBottomWidth: 0.5,
+  borderBottomColor: "#E5E5EA",
+},
+
+avatar: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 12,
+  backgroundColor: "#E5E5EA",
+},
+
+contactInfo: {
+  flex: 1,
+  justifyContent: "center",
+},
+
+contactName: {
+  fontSize: 16,
+  fontWeight: "500",
+  color: "#000",
+},
+
+contactSub: {
+  fontSize: 14,
+  color: "#8E8E93",
+  marginTop: 2,
+},
 
 
 });
