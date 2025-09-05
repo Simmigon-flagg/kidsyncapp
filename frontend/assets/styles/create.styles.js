@@ -136,6 +136,21 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
+filePreview: {
+  width: 150,
+  height: 150,
+  backgroundColor: "#f4f4f4",
+  borderRadius: 12,
+  justifyContent: "center",
+  alignItems: "center",
+},
+fileName: {
+  marginTop: 8,
+  textAlign: "center",
+  color: COLORS.textSecondary,
+  maxWidth: 150, // keep filename aligned with box
+},
+
 });
 
 export default styles;

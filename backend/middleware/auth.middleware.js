@@ -12,6 +12,7 @@ const protectedRoute = async (request, response, next) => {
         .json({ message: "No authentication token, access denied" });
 
     const token = authHeader.replace("Bearer ", "");
+    console.log(token)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await Users.findById(decoded.user_id).select(

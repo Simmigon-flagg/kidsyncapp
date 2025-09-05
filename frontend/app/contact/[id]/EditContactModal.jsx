@@ -22,8 +22,7 @@ export default function EditContactModal({
   visible,
   onClose,
   contact,
-  onSave,
-  closeTabModal
+  onSave
 }) {
   const [name, setName] = useState(contact?.name || "");
   const [phone, setPhone] = useState(contact?.phone || "");
@@ -32,14 +31,25 @@ export default function EditContactModal({
   const [image, setImage] = useState(contact?.profileImage || null);
   const [imageBase64, setImageBase64] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+
+  const BASE_URL =
+    Platform.OS === "android"
+      ? "http://10.0.2.2:3000"
+      : "http://localhost:3000";
+
   useEffect(() => {
     if (contact) {
       setName(contact.name);
       setPhone(contact.phone);
       setEmail(contact.email);
       setRelationship(contact.relationship);
-      setImage(contact.profileImage);
+
+      // Show uploaded image if it exists, otherwise fallback
+      if (contact.imageFileId) {
+        setImage(`${BASE_URL}/api/v1/contacts/${contact._id}/image`);
+      } else {
+        setImage(contact.profileImage); // fallback DiceBear avatar
+      }
     }
   }, [contact]);
 
@@ -119,6 +129,7 @@ export default function EditContactModal({
       updated.fileName = image.split("/").pop();
       updated.fileType = `image/${updated.fileName.split(".").pop()}`;
     }
+
     await onSave(updated);
     setLoading(false);
     onClose();

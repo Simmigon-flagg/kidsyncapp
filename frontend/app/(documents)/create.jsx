@@ -1,230 +1,277 @@
-import { View, Text, KeyboardAvoidingView, Image, Platform, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
-import { useState } from 'react'
-import styles from "../../assets/styles/create.styles"
-import COLORS from '../../constants/colors';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from "expo-image-picker"
-import * as FileSystem from "expo-file-system"
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  View,
+  Text,
+  KeyboardAvoidingView,
+  Image,
+  Platform,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Linking,
+} from "react-native";
+import { useState } from "react";
+import styles from "../../assets/styles/create.styles";
+import COLORS from "../../constants/colors";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Create() {
-    const [name, setName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
-    const [relationship, setRelationship] = useState("");
-    const [rating, setRating] = useState(3);
-    const [image, setImage] = useState(null); // to display the selected image
-    const [imageBase64, setImageBase64] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+  const [title, setTitle] = useState("");
+  const [fileUri, setFileUri] = useState(null);
+  const [fileBase64, setFileBase64] = useState(null);
+  const [fileName, setFileName] = useState(null);
 
-    const pickImage = async () => {
-        try {
-            // request permission if needed
-            if (Platform.OS !== "web") {
-                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                if (status !== "granted") {
-                    Alert.alert("Permission Denied", "We need camera roll permissions to upload an image");
-                    return;
-                }
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ["livePhotos", "images"],
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 0.5,
-                base64: true,
-            })
-            if (!result.canceled) {
-                setImage(result.assets[0].uri)
-            }
-            if (result.assets[0].base64) {
-                setImageBase64(result.assets[0].base64)
-            } else {
-                const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
-                    encoding: FileSystem.EncodingType.Base64,
-                });
-                setImageBase64(base64);
-            }
-        }
-        catch (error) {
-            Alert.alert("Error", "There was a problem selecting your image")
-        }
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const BASE_URL =
+    Platform.OS === "android"
+      ? "http://10.0.2.2:3000"
+      : "http://localhost:3000";
+
+  // Pick file (image or document)
+  const pickFile = async () => {
+    try {
+      if (Platform.OS === "web") {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "*/*";
+        input.onchange = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          setFileUri(URL.createObjectURL(file));
+          setFileName(file.name);
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result.split(",")[1];
+            setFileBase64(base64);
+          };
+          reader.readAsDataURL(file);
+        };
+        input.click();
+        return;
+      }
+
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "image/*",
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ],
+      });
+
+      if (result.type === "success") {
+        setFileUri(result.uri);
+        setFileName(result.name);
+        setFileBase64(null);
+      }
+    } catch (err) {
+      Alert.alert("Error", "Could not pick file.");
+    }
+  };
+
+  // Open file externally
+  const openFile = () => {
+    if (!fileUri) return;
+    if (Platform.OS === "web") {
+      window.open(fileUri, "_blank");
+    } else {
+      Linking.openURL(fileUri);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!title) {
+      Alert.alert("Error", "Title is required");
+      return;
     }
 
-    const handleSubmit = async () => {
-        if (!name || !phone) {
-            Alert.alert("Error", "Name and phone are required")
-            
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("token");
+
+      const formData = new FormData();
+      formData.append("title", title);
+
+      if (fileUri) {
+        const title = fileName || fileUri.split("/").pop() || "file"; // fallback title
+        const match = /\.(\w+)$/.exec(title); // removed the `!`
+        const fileType = match
+          ? match[1].toLowerCase() === "pdf"
+            ? "application/pdf"
+            : match[1].toLowerCase() === "doc" ||
+              match[1].toLowerCase() === "docx"
+            ? "application/msword"
+            : match[1].toLowerCase() === "xls" ||
+              match[1].toLowerCase() === "xlsx"
+            ? "application/vnd.ms-excel"
+            : `image/${match[1]}`
+          : "application/octet-stream";
+
+        if (Platform.OS === "web" && fileBase64) {
+          const byteCharacters = atob(fileBase64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: fileType });
+          formData.append("file", blob, title);
         } else {
-            try {
-                setLoading(true)
-                const token = await AsyncStorage.getItem("token")
-          
-                // const uriParts = image - split(".");
-                // const fileType = uriParts[uriParts.length - 1];
-                // const imageType = fileType ? `image/${fileType.toLowerCase()}` : "image/jpeg";
-                // const imageDataUrl = `data:${imageType}; base64, ${imageBase64}`;
-                const response = await fetch(`http://192.168.1.238:3000/api/v1/contacts`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name,
-                        phone,
-                        relationship,
-                        email
-                    })
-                })
-                const data = response.json()
-                if (!response.ok) throw new Error(data.message || "Something went wrong")
-                // Alert.alert("Success", "Your document was added")
-                console.log("data", data)
-                setName("")
-                router.push("/")
-            } catch (error) {
-                setLoading(false)
-                Alert.alert("Error", error)
-            } finally {
-                setLoading(false)
-            }
-
+          formData.append("file", {
+            uri: fileUri,
+            title,
+            type: fileType,
+          });
         }
+      }
+      console.log("formData", formData);
+      const response = await fetch(`${BASE_URL}/api/v1/documents`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to upload document");
+
+      Alert.alert("Success", "Document uploaded successfully");
+      setTitle("");
+      setFileUri(null);
+      setFileBase64(null);
+      setFileName(null);
+      router.push("/");
+    } catch (err) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return (
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-            <ScrollView contentContainerStyle={styles.container} style={styles.scrollViewStyle}>
-                <View style={styles.card}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Add Contact</Text>
-                        <Text style={styles.subtitle}> This contact will be shared</Text >
-                    </View >
-                    <View style={styles.form}>
-                        <View style={styles.formGroup}>
-                            <Text style={styles.label}>Contact Name</Text>
-                            <View style={styles.inputContainer}>
-                                <Ionicons
-                                    name="book-outline"
-                                    size={20}
-                                    color={COLORS.textSecondary}
-                                    style={styles.inputIcon}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Enter contact name"
-                                    placeholderTextColor={COLORS.placeholderText}
-                                    value={name}
-                                    onChangeText={setName}
-                                />
-                            </View>
-                        </View>
-                        <View style={styles.formGroup}>
-                            <Text style={styles.label}>Phone</Text>
-                            <View style={styles.inputContainer}>
-                                <Ionicons
-                                    name="call-outline"
-                                    size={20}
-                                    color={COLORS.textSecondary}
-                                    style={styles.inputIcon}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="###-###-####"
-                                    placeholderTextColor={COLORS.placeholderText}
-                                    value={phone}
-                                    onChangeText={setPhone}
-                                />
-                            </View>
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        style={styles.scrollViewStyle}
+      >
+        <View style={styles.card}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Add Document</Text>
+          </View>
 
-                        </View>
-                        <View style={styles.formGroup}>
-                            <Text style={styles.label}>Email</Text>
-                            <View style={styles.inputContainer}>
-                                <Ionicons
-                                    name="mail-outline"
-                                    size={20}
-                                    color={COLORS.textSecondary}
-                                    style={styles.inputIcon}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="email@gmail.com"
-                                    placeholderTextColor={COLORS.placeholderText}
-                                    value={email}
-                                    onChangeText={setEmail}
-                                />
-                            </View>
+          <View style={styles.form}>
+            {/* Title */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Title</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color={COLORS.textSecondary}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter document title"
+                  placeholderTextColor={COLORS.placeholderText}
+                  value={title}
+                  onChangeText={setTitle}
+                />
+              </View>
+            </View>
 
-                        </View>
-                        <View style={styles.formGroup}>
-                            <Text style={styles.label}>Relationship</Text>
-                            <View style={styles.inputContainer}>
-                                <Ionicons
-                                    name="person-outline"
-                                    size={20}
-                                    color={COLORS.textSecondary}
-                                    style={styles.inputIcon}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Grandma"
-                                    placeholderTextColor={COLORS.placeholderText}
-                                    value={relationship}
-                                    onChangeText={setRelationship}
-                                />
-                            </View>
+            {/* File Picker */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>File / Image</Text>
 
-                        </View>
-                        <View style={styles.formGroup}>
-                            <Text style={styles.label}>Contact Image</Text>
-                            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-                                {image ? (
-                                    <Image
-                                        source={{ uri: image }}
-                                        style={styles.previewImage} />
-                                ) : (
-                                    < View style={styles.placeholderContainer}>
-                                        <Ionicons
-                                            name="image-outline"
-                                            size={40}
-                                            color={COLORS.textSecondary} />
-                                        <Text style={styles.placeholderText}>Tap to select image</Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        </View>
+              <TouchableOpacity style={styles.imagePicker} onPress={pickFile}>
+                {fileUri ? (
+                  <>
+                    {fileName?.match(/\.(pdf|docx?|xlsx?)$/i) ? (
+                      <View
+                        style={[
+                          styles.filePreview,
+                          { alignItems: "center", justifyContent: "center" },
+                        ]}
+                      >
+                        <Ionicons
+                          name="document-text-outline"
+                          size={50}
+                          color={COLORS.textSecondary}
+                        />
+                        <Text style={styles.fileName}>{fileName}</Text>
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: fileUri }}
+                        style={styles.previewImage}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <View style={styles.placeholderContainer}>
+                    <Ionicons
+                      name="cloud-upload-outline"
+                      size={40}
+                      color={COLORS.textSecondary}
+                    />
+                    <Text style={styles.placeholderText}>
+                      Tap to select file
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
 
+            {/* Upload button - only show if file exists */}
+            {fileUri && (
+              <TouchableOpacity
+                onPress={openFile}
+                style={styles.button}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>Tap to open</Text>
+              </TouchableOpacity>
+            )}
 
-
-                        <TouchableOpacity style={styles.button} onPress={handleSubmit}
-                            disabled={loading}>
-                            {loading ? (
-                                < ActivityIndicator color={COLORS.white} />) : (
-                                <>
-                                    <Ionicons
-                                        name="cloud-upload-outline"
-                                        size={20}
-                                        color={COLORS.white} style={styles.buttonIcon}
-                                    />
-                                    <Text style={styles.buttonText}>Share</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-
-
-
-                </View >
-            </ScrollView >
-
-        </KeyboardAvoidingView >
-    )
+            {/* Always show Upload button */}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="cloud-upload-outline"
+                    size={20}
+                    color={COLORS.white}
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={styles.buttonText}>Upload</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
 }

@@ -24,7 +24,7 @@ const BASE_URL =
     ? "http://10.0.2.2:3000"
     : "http://192.168.1.238:3000";
 
-export default function Home() {
+export default function Contacts() {
   const { token } = useAuthStore();
   const router = useRouter();
 
@@ -37,7 +37,11 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchTimeout = useRef(null);
 
-  const fetchContacts = async (pageNumber = 1, refresh = false, search = "") => {
+  const fetchContacts = async (
+    pageNumber = 1,
+    refresh = false,
+    search = ""
+  ) => {
     try {
       if (refresh) setRefreshing(true);
       else if (pageNumber === 1) setLoading(true);
@@ -49,13 +53,16 @@ export default function Home() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to fetch contacts");
+      if (!response.ok)
+        throw new Error(data.message || "Failed to fetch contacts");
 
       if (refresh || pageNumber === 1) setContacts(data.contacts);
       else {
         setContacts((prev) => {
           const existingIds = new Set(prev.map((c) => c._id));
-          const newContacts = data.contacts.filter((c) => !existingIds.has(c._id));
+          const newContacts = data.contacts.filter(
+            (c) => !existingIds.has(c._id)
+          );
           return [...prev, ...newContacts];
         });
       }
@@ -101,7 +108,8 @@ export default function Home() {
   const handleRefresh = () => fetchContacts(1, true, searchQuery);
 
   const handleCall = (phoneNumber) => {
-    if (phoneNumber) Linking.openURL(`tel:${phoneNumber.replace(/[^0-9+]/g, "")}`);
+    if (phoneNumber)
+      Linking.openURL(`tel:${phoneNumber.replace(/[^0-9+]/g, "")}`);
   };
 
   const renderItem = ({ item }) => (
@@ -113,11 +121,12 @@ export default function Home() {
         <Image
           source={{
             uri: item.imageFileId
-              ? `${BASE_URL}/api/v1/contacts/${item._id}/image`
+              ? `${BASE_URL}/api/v1/contacts/${item._id}/image?ts=${Date.now()}`
               : item.profileImage,
           }}
           style={styles.avatar}
         />
+
         <View style={styles.contactInfo}>
           <Text style={styles.contactName} numberOfLines={1}>
             {item.name || "Unnamed Contact"}
@@ -138,6 +147,12 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={[styles.input, { margin: 10 }]}
+        placeholder="Search by title or file name"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <FlatList
         data={contacts}
         renderItem={renderItem}
@@ -146,33 +161,12 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.1}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Contacts</Text>
-            
-
-            {/* Search Bar */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginTop: 10,
-                borderWidth: 1,
-                borderColor: COLORS.border,
-                borderRadius: 8,
-                paddingHorizontal: 10,
-              }}
-            >
-              <Ionicons name="search-outline" size={20} color={COLORS.textSecondary} />
-              <TextInput
-                placeholder="Search contacts..."
-                placeholderTextColor={COLORS.placeholderText}
-                style={{ flex: 1, marginLeft: 8, color: COLORS.textDark }}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
           </View>
         }
         ListFooterComponent={
@@ -182,7 +176,11 @@ export default function Home() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={60} color={COLORS.textSecondary} />
+            <Ionicons
+              name="book-outline"
+              size={60}
+              color={COLORS.textSecondary}
+            />
             <Text style={styles.emptyText}>No Contacts</Text>
           </View>
         }

@@ -27,6 +27,12 @@ const UserSchema = new Schema(
         ref: 'Contact',
       },
     ],
+    documents: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Document',
+      },
+    ],
     refreshToken: String,
     passwordResetToken: String,
     passwordResetExpires: Date,

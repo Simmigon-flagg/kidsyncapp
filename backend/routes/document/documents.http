@@ -1,0 +1,3 @@
+POST http://localhost:3000/api/v1/documents
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhiMGMwYjQyOWZmZjA0NmEyYmY2MTdmIiwiaWF0IjoxNzU2NjIyODQ3LCJleHAiOjE3NTc5MTg4NDd9.y5BrlKW9qNwT4iB1H9N7Frc6MFEsi43GooO3BRPuodo
+Content-Type: multipart/form-data

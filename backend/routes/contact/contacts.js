@@ -16,8 +16,8 @@ export async function uploadBufferToGridFS(
   filename = `${Date.now()}`,
   contentType = "application/octet-stream"
 ) {
-  const db = mongoose.connection.db;
-  const bucket = new GridFSBucket(db, { bucketName: "images" });
+  
+ const { bucket } = await connectToDatabase(); // use shared bucket
 
   return new Promise((resolve, reject) => {
     const stream = bucket.openUploadStream(filename, { contentType });
@@ -204,36 +204,50 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
 });
 
 // Update a contact
-router.put("/:_id", protectedRoute, async (request, response) => {
+// Update a contact (with GridFS image upload)
+router.put("/:_id", protectedRoute, async (req, res) => {
   await connectToDatabase();
   try {
-    const { name, phone, email, relationship, imageId } = request.body;
-
-    const contact = await Contacts.findById(request.params._id);
+    const { name, phone, email, relationship, fileBase64, fileName, fileType } = req.body;
+    const contact = await Contacts.findById(req.params._id);
 
     if (!contact) {
-      return response.status(404).json({ message: "Contact not found" });
+      return res.status(404).json({ message: "Contact not found" });
     }
 
-    if (contact.owner.toString() !== request.user._id.toString()) {
-      return response.status(401).json({ message: "Unauthorized" });
+    if (contact.owner.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Update only the fields provided
+    // Update text fields
     if (name !== undefined) contact.name = name;
     if (phone !== undefined) contact.phone = phone;
     if (email !== undefined) contact.email = email;
     if (relationship !== undefined) contact.relationship = relationship;
-    if (imageId !== undefined) contact.imageId = imageId;
+
+    // If a new image was sent, upload it to GridFS
+    if (fileBase64) {
+      const buffer = Buffer.from(fileBase64, "base64");
+
+      const imageMeta = await uploadBufferToGridFS(
+        buffer,
+        fileName || `${name || "contact"}.png`,
+        fileType || "image/png"
+      );
+
+      contact.imageFileId = imageMeta.fileId;
+      contact.imageFileName = imageMeta.filename;
+      contact.imageContentType = imageMeta.contentType;
+    }
 
     await contact.save();
-
-    return response.status(200).json({ contact });
+    return res.status(200).json({ contact });
   } catch (error) {
     console.error("Error updating contact", error);
-    return response.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
+
 // Get a contact
 router.get("/:_id", protectedRoute, async (request, response) => {
   await connectToDatabase();
@@ -258,19 +272,17 @@ router.get("/:_id", protectedRoute, async (request, response) => {
 
 // routes/contact/contacts.js — image route
 router.get("/:id/image", async (req, res) => {
-  console.log("or here");
+ 
   try {
-    await connectToDatabase();
+    const { bucket } = await connectToDatabase();
     const contact = await Contacts.findById(req.params.id).select(
       "imageFileId imageContentType"
     );
     if (!contact || !contact.imageFileId)
       return res.status(404).json({ message: "Image not found" });
 
-    const db = mongoose.connection.db;
-    const bucket = new mongoose.mongo.GridFSBucket(db, {
-      bucketName: "images",
-    });
+    
+ 
     const fileId = new mongoose.Types.ObjectId(contact.imageFileId);
     res.set(
       "Content-Type",

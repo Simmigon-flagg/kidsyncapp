@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -58,8 +58,8 @@ export default function ContactPage() {
   };
 
   const closeModal = () => {
-    setModalVisible(false)
-  }
+    setModalVisible(false);
+  };
   const handleEmail = (email) => {
     if (email) Linking.openURL(`mailto:${email}`);
   };
@@ -92,14 +92,16 @@ export default function ContactPage() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Image
-          source={{
-            uri: contact.imageFileId
-              ? `${BASE_URL}/api/v1/contacts/${contact._id}/image`
-              : contact.profileImage,
-          }}
-          style={styles.avatar}
-        />
+<Image
+  source={{
+    uri:
+      contact.imageFileId
+        ? `${BASE_URL}/api/v1/contacts/${contact._id}/image?ts=${Date.now()}`
+        : contact.profileImage,
+  }}
+  key={contact.imageFileId || "default"} // force rerender when imageFileId changes
+  style={styles.avatar}
+/>
         <Text style={styles.name}>{contact.name}</Text>
         <Text style={styles.role}>{contact.relationship}</Text>
       </View>
@@ -139,21 +141,31 @@ export default function ContactPage() {
       {/* Edit Modal */}
       <EditContactModal
         visible={modalVisible}
-        onClose={closeModal}        
+        onClose={closeModal}
         contact={contact}
         onSave={async (updated) => {
-          // call API to update
           try {
-            const response = await fetch(`${BASE_URL}/api/v1/contacts/${contact._id}`, {
-              method: "PUT",
-              headers: { 
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(updated),
-            });
+            const response = await fetch(
+              `${BASE_URL}/api/v1/contacts/${contact._id}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(updated),
+              }
+            );
             const data = await response.json();
-            setContact(data.contact); // immediately reflect updated info
+
+            setContact((prev) => ({
+              ...data.contact,
+              imageFileId: data.contact.imageFileId,
+              // optionally add cache-busting
+              imageUri: `${BASE_URL}/api/v1/contacts/${
+                data.contact._id
+              }/image?ts=${Date.now()}`,
+            }));
           } catch (err) {
             console.error("Update failed", err);
           }
@@ -186,13 +198,43 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     elevation: 3,
   },
-  avatar: { width: 140, height: 140, borderRadius: 70, borderWidth: 2, borderColor: COLORS.primary, backgroundColor: "#eee" },
+  avatar: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    backgroundColor: "#eee",
+  },
   name: { fontSize: 26, fontWeight: "700", marginTop: 15 },
   role: { fontSize: 16, color: "#666", marginTop: 5 },
-  card: { backgroundColor: "#fff", marginHorizontal: 20, borderRadius: 16, paddingVertical: 20, paddingHorizontal: 15, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  card: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
   icon: { fontSize: 22, marginRight: 15 },
   text: { fontSize: 18, color: "#333" },
-  editButton: { margin: 20, padding: 15, backgroundColor: COLORS.primary, borderRadius: 10, alignItems: "center" },
+  editButton: {
+    margin: 20,
+    padding: 15,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    alignItems: "center",
+  },
   editButtonText: { color: "#fff", fontWeight: "600" },
 });

@@ -41,33 +41,34 @@ export default function RootLayout() {
     else setShow("none");
   }, [user, token]);
 
-useEffect(() => {
-  if (!authChecked || segments.length === 0) return;
+  useEffect(() => {
+    if (!authChecked || segments.length === 0) return;
 
-  const inAuthGroup = segments[0] === "(auth)";
-  const isSignedIn = !!user && !!token;
+    const inAuthGroup = segments[0] === "(auth)";
+    const isSignedIn = !!user && !!token;
 
-  // Only redirect to auth if not signed in and trying to access protected route
-  if (!isSignedIn && !inAuthGroup) {
-    router.replace("/(auth)");
-    return;
-  }
+    // Only redirect to auth if not signed in and trying to access protected route
+    if (!isSignedIn && !inAuthGroup) {
+      router.replace("/(auth)");
+      return;
+    }
 
-  // Optional: block login page if signed in
-  if (isSignedIn && inAuthGroup) {
-    router.replace("/(dashboard)");
-    return;
-  }
+    // Optional: block login page if signed in
+    if (isSignedIn && inAuthGroup) {
+      router.replace("/(dashboard)");
+      return;
+    }
 
-  // Otherwise, do nothing and stay on current page
-}, [authChecked, segments, user, token]);
-
+    // Otherwise, do nothing and stay on current page
+  }, [authChecked, segments, user, token]);
 
   if (!authChecked) {
     return (
       <SafeAreaProvider>
         <SafeScreen>
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
             <ActivityIndicator size="large" />
           </View>
         </SafeScreen>
@@ -83,17 +84,25 @@ useEffect(() => {
           screenOptions={{ headerShown: true }}
           drawerContent={(props) => (
             <View style={{ flex: 1 }}>
-              <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
+              <DrawerContentScrollView
+                {...props}
+                contentContainerStyle={{ flexGrow: 1 }}
+              >
                 <DrawerItemList {...props} />
               </DrawerContentScrollView>
 
               {user && token && (
-                <View style={{ padding: 16, borderTopWidth: 1, borderColor: "#ccc" }}>
+                <View
+                  style={{
+                    padding: 16,
+                    borderTopWidth: 1,
+                    borderColor: "#ccc",
+                  }}
+                >
                   <LogoutButton />
                 </View>
               )}
             </View>
-
           )}
         >
           {/* Dashboard & other screens */}
@@ -102,7 +111,9 @@ useEffect(() => {
             options={{
               drawerLabel: "Dashboard",
               title: "Dashboard",
-              drawerIcon: ({ size, color }) => <Ionicons name="home-outline" size={size} color={color} />,
+              drawerIcon: ({ size, color }) => (
+                <Ionicons name="home-outline" size={size} color={color} />
+              ),
             }}
           />
           <Drawer.Screen
@@ -110,8 +121,10 @@ useEffect(() => {
             options={{
               drawerLabel: "Dashboard",
               title: "Dashboard",
-               drawerItemStyle: { display: "none" },
-              drawerIcon: ({ size, color }) => <Ionicons name="home-outline" size={size} color={color} />,
+              drawerItemStyle: { display: "none" },
+              drawerIcon: ({ size, color }) => (
+                <Ionicons name="home-outline" size={size} color={color} />
+              ),
             }}
           />
           <Drawer.Screen
@@ -120,7 +133,9 @@ useEffect(() => {
               drawerLabel: "Profile",
               title: "Profile",
               drawerItemStyle: { display: show },
-              drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="person-outline" size={size} color={color} />
+              ),
             }}
           />
           <Drawer.Screen
@@ -129,7 +144,13 @@ useEffect(() => {
               drawerLabel: "Documents",
               title: "Documents",
               drawerItemStyle: { display: show },
-              drawerIcon: ({ size, color }) => <Ionicons name="document-text-outline" size={size} color={color} />,
+              drawerIcon: ({ size, color }) => (
+                <Ionicons
+                  name="document-text-outline"
+                  size={size}
+                  color={color}
+                />
+              ),
             }}
           />
           <Drawer.Screen
@@ -138,7 +159,9 @@ useEffect(() => {
               drawerLabel: "Visitations",
               title: "Visitations",
               drawerItemStyle: { display: show },
-              drawerIcon: ({ size, color }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+              drawerIcon: ({ size, color }) => (
+                <Ionicons name="calendar-outline" size={size} color={color} />
+              ),
             }}
           />
           <Drawer.Screen
@@ -147,7 +170,9 @@ useEffect(() => {
               drawerLabel: "Messages",
               title: "Messages",
               drawerItemStyle: { display: show },
-              drawerIcon: ({ size, color }) => <Ionicons name="chatbubble-outline" size={size} color={color} />,
+              drawerIcon: ({ size, color }) => (
+                <Ionicons name="chatbubble-outline" size={size} color={color} />
+              ),
             }}
           />
           <Drawer.Screen
@@ -156,7 +181,9 @@ useEffect(() => {
               drawerLabel: "Contacts",
               title: "Contacts",
               drawerItemStyle: { display: show },
-              drawerIcon: ({ size, color }) => <Ionicons name="people-outline" size={size} color={color} />,
+              drawerIcon: ({ size, color }) => (
+                <Ionicons name="people-outline" size={size} color={color} />
+              ),
             }}
           />
           <Drawer.Screen
@@ -167,14 +194,7 @@ useEffect(() => {
               drawerItemStyle: { display: "none" },
             }}
           />
-          <Drawer.Screen
-            name="contact/[id]"
-            options={{
-              drawerLabel: "Contact",
-              title: "Contact",
-              drawerItemStyle: { display: "none" },
-            }}
-          />
+
           <Drawer.Screen
             name="contact/[id]/index"
             options={{
@@ -188,6 +208,22 @@ useEffect(() => {
             options={{
               drawerLabel: "Contact",
               title: "Contact",
+              drawerItemStyle: { display: "none" },
+            }}
+          />
+          <Drawer.Screen
+            name="document/[id]/EditDocumentModal"
+            options={{
+              drawerLabel: "Document",
+              title: "Document",
+              drawerItemStyle: { display: "none" },
+            }}
+          />
+          <Drawer.Screen
+            name="document/[id]/index"
+            options={{
+              drawerLabel: "Document",
+              title: "Document",
               drawerItemStyle: { display: "none" },
             }}
           />

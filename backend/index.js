@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth/authRoutes.js";
 import contactsRoutes from "./routes/contact/contacts.js";
-import os from "os";
+import documentsRoutes from "./routes/document/documents.js";
 import morgan from "morgan";
 
 const app = express();
@@ -25,6 +25,7 @@ app.use(
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/contacts", contactsRoutes);
+app.use("/api/v1/documents", documentsRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at:`);
