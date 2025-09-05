@@ -14,7 +14,7 @@ import { useAuthStore } from "../../../store/authStore";
 import COLORS from "../../../constants/colors";
 import EditDocumentModal from "./EditDocumentModal";
 
-export default function DocumentPage() {
+export default function Document() {
   const { id } = useLocalSearchParams();
   const { token } = useAuthStore();
   const [document, setDocument] = useState(null);

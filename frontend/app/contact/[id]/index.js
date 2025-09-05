@@ -17,7 +17,7 @@ import EditContactModal from "./EditContactModal"; // modal component from previ
 
 export const unstable_skipLayout = true;
 
-export default function ContactPage() {
+export default function Contact() {
   const { id } = useLocalSearchParams();
   const { token } = useAuthStore();
   const [contact, setContact] = useState(null);

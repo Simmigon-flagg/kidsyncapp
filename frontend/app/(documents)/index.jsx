@@ -25,7 +25,7 @@ const BASE_URL =
     ? "http://10.0.2.2:3000"
     : "http://192.168.1.238:3000";
 
-export default function Home() {
+export default function Documents() {
   const { token } = useAuthStore();
 
   const [documents, setDocuments] = useState([]);
