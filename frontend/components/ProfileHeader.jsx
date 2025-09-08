@@ -11,11 +11,10 @@ import { useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import styles from "../assets/styles/profile.styles";
 import { Image } from "expo-image";
-import formatMemberSince from "../lib/utils";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
-
+import dateUtils  from "../lib/utils";
 const BASE_URL =
   Platform.OS === "android"
     ? "http://10.0.2.2:3000"
@@ -122,7 +121,7 @@ export default function ProfileHeader() {
         <Text style={styles.name}>{user?.name.toUpperCase()}</Text>
         <Text style={styles.email}>{user?.email}</Text>
         <Text style={styles.memberSince}>
-          Joined {formatMemberSince(user?.createdAt)}
+          Joined {dateUtils.formatDate(user?.createdAt)}
         </Text>
       </View>
 

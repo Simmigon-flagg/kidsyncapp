@@ -8,10 +8,11 @@ const DocumentSchema = new mongoose.Schema(
       required: true,
     },
 
-    // childId: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: 'Children'
-    // },
+    // Either embed child info or reference a child
+    child: {
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Children" }, // optional reference
+      name: { type: String }, // human-friendly display name
+    },
     // GridFS reference for profile picture
     fileId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -18,8 +18,19 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Picker } from "@react-native-picker/picker";
+import { useAuthStore } from "../../store/authStore";
+import { useEffect } from "react";
 
+// In your component
+const BASE_URL =
+  Platform.OS === "android"
+    ? "http://10.0.2.2:3000"
+    : "http://192.168.1.238:3000";
 export default function Create() {
+  const { token } = useAuthStore();
+  const [selectedChild, setSelectedChild] = useState({ _id: "", name: "" });
+  const [childrenList, setChildrenList] = useState([]);
   const [title, setTitle] = useState("");
   const [fileUri, setFileUri] = useState(null);
   const [fileBase64, setFileBase64] = useState(null);
@@ -27,11 +38,22 @@ export default function Create() {
 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  useEffect(() => {
+    const fetchChildren = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/v1/children/list`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        console.log("data.children:", data.children);
+        setChildrenList(data.children || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  const BASE_URL =
-    Platform.OS === "android"
-      ? "http://10.0.2.2:3000"
-      : "http://localhost:3000";
+    fetchChildren();
+  }, []);
 
   // Pick file (image or document)
   const pickFile = async () => {
@@ -90,6 +112,7 @@ export default function Create() {
   };
 
   const handleSubmit = async () => {
+    console.log("childrenList", childrenList);
     if (!title) {
       Alert.alert("Error", "Title is required");
       return;
@@ -101,6 +124,8 @@ export default function Create() {
 
       const formData = new FormData();
       formData.append("title", title);
+      formData.append("child", JSON.stringify(selectedChild));
+
 
       if (fileUri) {
         const title = fileName || fileUri.split("/").pop() || "file"; // fallback title
@@ -130,11 +155,14 @@ export default function Create() {
           formData.append("file", {
             uri: fileUri,
             title,
+            child:  JSON.stringify(selectedChild),
             type: fileType,
           });
         }
       }
-      console.log("formData", formData);
+      const view = formData.get("child")
+
+
       const response = await fetch(`${BASE_URL}/api/v1/documents`, {
         method: "POST",
         headers: {
@@ -149,6 +177,7 @@ export default function Create() {
 
       Alert.alert("Success", "Document uploaded successfully");
       setTitle("");
+      setSelectedChild({ _id: "", name: "" });
       setFileUri(null);
       setFileBase64(null);
       setFileName(null);
@@ -175,7 +204,35 @@ export default function Create() {
           </View>
 
           <View style={styles.form}>
-            {/* Title */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Select Child</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color={COLORS.textSecondary}
+                  style={styles.inputIcon}
+                />
+                <Picker
+                  selectedValue={selectedChild._id}
+                  onValueChange={(itemValue, itemIndex) =>
+                    setSelectedChild({
+                      _id: itemValue,
+                      name: childrenList[itemIndex - 1]?.name || "", // -1 because of the first placeholder
+                    })
+                  }
+                >
+                  <Picker.Item label="Select a child..." value="" />
+                  {childrenList.map((child) => (
+                    <Picker.Item
+                      key={child._id}
+                      label={child.name}
+                      value={child._id}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
             <View style={styles.formGroup}>
               <Text style={styles.label}>Title</Text>
               <View style={styles.inputContainer}>

@@ -37,7 +37,6 @@ export async function uploadBufferToGridFS(
 router.put("/:_id", protectedRoute, upload.single("file"), async (req, res) => {
   await connectToDatabase();
 
-
   try {
     const { title } = req.body;
     const updatedDocument = await Documents.findById(req.params._id);
@@ -49,21 +48,20 @@ router.put("/:_id", protectedRoute, upload.single("file"), async (req, res) => {
     // Update title if provided
     if (title !== undefined) updatedDocument.title = title;
 
-
     if (req.file && req.file.buffer) {
       const imageMeta = await uploadBufferToGridFS(
         req.file.buffer,
         req.file.originalname || updatedDocument.fileName,
         req.file.mimetype || updatedDocument.contentType
       );
-      
+
       updatedDocument.fileId = imageMeta.fileId;
       updatedDocument.fileName = imageMeta.filename;
       updatedDocument.contentType = imageMeta.contentType;
     }
 
     const document = await updatedDocument.save();
-    
+
     console.log("PUT +++ document", document);
     return res.status(200).json({ document });
   } catch (err) {
@@ -72,12 +70,14 @@ router.put("/:_id", protectedRoute, upload.single("file"), async (req, res) => {
   }
 });
 
-
 // ---- Create Document ----
 router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
   await connectToDatabase();
   try {
-    const { title, fileBase64, fileName, fileType } = req.body;
+    const { title, fileBase64, fileName, fileType, child } = req.body;
+
+    const childData = JSON.parse(child);
+
     const owner = req.user._id;
 
     let imageMeta = null;
@@ -102,6 +102,10 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
     const document = await Documents.create({
       owner,
       title, // <-- matches schema
+      child: {
+        _id: childData._id,
+        name: childData.name,
+      },
       fileId: imageMeta?.fileId || null,
       fileName: imageMeta?.filename || null,
       contentType: imageMeta?.contentType || null,
@@ -144,7 +148,7 @@ router.get("/", protectedRoute, async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate("owner", "title");
-    
+    console.log("documents", documents);
     const totalDocuments = await Documents.countDocuments(query);
     const totalPages = Math.ceil(totalDocuments / limit);
 
@@ -205,12 +209,12 @@ router.get("/:_id", protectedRoute, async (req, res) => {
   await connectToDatabase();
   try {
     const document = await Documents.findById(req.params._id);
-    console.log("_id +++++++",req.params._id)
+    console.log("_id +++++++", req.params._id);
     if (!document)
       return res.status(404).json({ message: "Document not found" });
     if (document.owner.toString() !== req.user._id.toString())
       return res.status(401).json({ message: "Unauthorized" });
-    console.log("GET *****", document)
+    console.log("GET *****", document);
     return res.status(200).json({ document });
   } catch (err) {
     console.error("Error fetching document:", err);
@@ -226,23 +230,20 @@ router.get("/:id/file", async (req, res) => {
     const document = await Documents.findById(req.params.id).select(
       "fileId contentType"
     );
-        const fileId = new mongoose.Types.ObjectId(document.fileId);
-        res.set(
-          "Content-Type",
-          document.contentType || "application/octet-stream"
-        );
-    
-        const downloadStream = bucket.openDownloadStream(fileId);
-        downloadStream.on("error", (err) => {
-          console.error("GridFS stream error:", err);
-          res.sendStatus(500);
-        });
-        downloadStream.pipe(res);
-      } catch (err) {
-        console.error("Error streaming image:", err);
-        res.status(500).json({ message: "Internal server error" });
-      }
-    
+    const fileId = new mongoose.Types.ObjectId(document.fileId);
+    res.set("Content-Type", document.contentType || "application/octet-stream");
+
+    const downloadStream = bucket.openDownloadStream(fileId);
+    downloadStream.on("error", (err) => {
+      console.error("GridFS stream error:", err);
+      res.sendStatus(500);
+    });
+    downloadStream.pipe(res);
+  } catch (err) {
+    console.error("Error streaming image:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+
   //   if (!document || !document.fileId)
   //     return res.status(404).json({ message: "File not found" });
 

@@ -16,7 +16,10 @@ const ContactSchema = new mongoose.Schema(
     //     ref: "LogGroup",
     //     required: true
     // },
-
+    child: {
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Children" }, // optional reference
+      name: { type: String }, // human-friendly display name
+    },
     // GridFS reference for profile picture
     imageFileId: {
       type: mongoose.Schema.Types.ObjectId,

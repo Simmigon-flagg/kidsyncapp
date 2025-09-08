@@ -176,6 +176,9 @@ export default function Documents() {
           )}
           <View style={styles.contactInfo}>
             <Text style={styles.contactName} numberOfLines={1}>
+              {item?.child?.name || "Unnamed Child"}
+            </Text>
+            <Text style={styles.contactName} numberOfLines={1}>
               {item.title || "Unnamed Document"}
             </Text>
             <Text style={styles.text}>File: {item.fileName}</Text>
@@ -203,56 +206,56 @@ export default function Documents() {
         onChangeText={setSearchQuery}
       />
 
-{Platform.OS === "web" ? (
-  <FlatList
-    data={filteredDocuments}
-    renderItem={renderItem}
-    keyExtractor={(item) => item._id}
-    contentContainerStyle={{ padding: 10 }}
-    style={{ height: '80vh' }} // ensures FlatList has height to scroll
-    showsVerticalScrollIndicator={true}
-    onEndReached={handleLoadMore}
-    onEndReachedThreshold={0.1}
-    ListFooterComponent={
-      loadingMore ? (
-        <ActivityIndicator style={{ marginVertical: 10 }} />
-      ) : null
-    }
-        ListHeaderComponent={
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Documents</Text>
-        <Text style={styles.headerSubtitle}>Documents</Text>
-      </View>
-    }
-    refreshControl={
-      <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-    }
-  />
-) : (
-  <FlatList
-    data={filteredDocuments}
-    renderItem={renderItem}
-    keyExtractor={(item) => item._id}
-    contentContainerStyle={styles.listContainer}
-    showsVerticalScrollIndicator={false}
-    onEndReached={handleLoadMore}
-    onEndReachedThreshold={0.1}
-    refreshControl={
-      <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-    }
-    ListHeaderComponent={
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Documents</Text>
-        <Text style={styles.headerSubtitle}>Shared Documents</Text>
-      </View>
-    }
-    ListFooterComponent={
-      loadingMore ? <ActivityIndicator style={{ marginVertical: 10 }} /> : null
-    }
-  />
-)}
-
-
+      {Platform.OS === "web" ? (
+        <FlatList
+          data={filteredDocuments}
+          renderItem={renderItem}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={{ padding: 10 }}
+          style={{ height: "80vh" }} // ensures FlatList has height to scroll
+          showsVerticalScrollIndicator={true}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.1}
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator style={{ marginVertical: 10 }} />
+            ) : null
+          }
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Documents</Text>
+              <Text style={styles.headerSubtitle}>Documents</Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        />
+      ) : (
+        <FlatList
+          data={filteredDocuments}
+          renderItem={renderItem}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.1}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Documents</Text>
+              <Text style={styles.headerSubtitle}>Shared Documents</Text>
+            </View>
+          }
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator style={{ marginVertical: 10 }} />
+            ) : null
+          }
+        />
+      )}
 
       <Modal visible={editModalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>

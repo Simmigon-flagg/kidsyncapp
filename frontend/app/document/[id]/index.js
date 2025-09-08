@@ -40,6 +40,7 @@ export default function Document() {
         },
       });
       const data = await res.json();
+      console.log("data.document", data.document)
       setDocument(data.document || null);
     } catch (err) {
       console.error("Failed to fetch document:", err);
@@ -125,7 +126,8 @@ export default function Document() {
           />
         )}
 
-        <Text style={styles.name}>{document.title}</Text>
+        <Text style={styles.name}>{document.child.name}</Text>
+        <Text style={styles.text}>{document.title}</Text>
         <Text style={styles.text}>
           Uploaded: {new Date(document.createdAt).toLocaleDateString()}
         </Text>

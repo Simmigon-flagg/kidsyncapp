@@ -138,6 +138,27 @@ router.get("/", protectedRoute, async (request, response) => {
   }
 });
 
+router.get("/list", protectedRoute, async (request, response) => {
+
+  await connectToDatabase();
+
+  try {
+    const user = await Users.findById(request.user._id).select("children");
+    if (!user) {
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    const children = await Children.find({ _id: { $in: user.children } }).select("_id name");
+
+
+    return response.status(200).json({ children });
+  } catch (error) {
+    console.error("Error in children route", error);
+    return response.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 // Get all contacts for the logged-in user (non-paginated)
 router.get("/user", protectedRoute, async (request, response) => {
   await connectToDatabase();
@@ -153,7 +174,7 @@ router.get("/user", protectedRoute, async (request, response) => {
   }
 });
 
-// Delete a contact from owner
+// Delete a children from owner
 router.delete("/:_id", protectedRoute, async (request, response) => {
   await connectToDatabase();
   const _id = request.params._id;
@@ -168,7 +189,7 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
     const children = await Children.findById(_id);
 
     if (!children) {
-      return response.status(404).json({ message: "Contact not found" });
+      return response.status(404).json({ message: "Child not found" });
     }
 
     if (children.owner.toString() !== request.user._id.toString()) {
@@ -191,8 +212,7 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
   }
 });
 
-// Update a contact
-// Update a contact (with GridFS image upload)
+// Update a children (with GridFS image upload)
 router.put("/:_id", protectedRoute, async (req, res) => {
   await connectToDatabase();
   try {
@@ -200,7 +220,7 @@ router.put("/:_id", protectedRoute, async (req, res) => {
     const children = await Children.findById(req.params._id);
 
     if (!children) {
-      return res.status(404).json({ message: "Contact not found" });
+      return res.status(404).json({ message: "Child not found" });
     }
 
     if (children.owner.toString() !== req.user._id.toString()) {
@@ -216,7 +236,7 @@ router.put("/:_id", protectedRoute, async (req, res) => {
 
       const imageMeta = await uploadBufferToGridFS(
         buffer,
-        fileName || `${name || "contact"}.png`,
+        fileName || `${name || "children"}.png`,
         fileType || "image/png"
       );
 
@@ -233,7 +253,7 @@ router.put("/:_id", protectedRoute, async (req, res) => {
   }
 });
 
-// Get a contact
+// Get a children
 router.get("/:_id", protectedRoute, async (request, response) => {
   await connectToDatabase();
 
@@ -241,7 +261,7 @@ router.get("/:_id", protectedRoute, async (request, response) => {
     const children = await Children.findById(request.params._id);
 
     if (!children) {
-      return response.status(404).json({ message: "Contact not found" });
+      return response.status(404).json({ message: "Child not found" });
     }
 
     if (children.owner.toString() !== request.user._id.toString()) {
@@ -255,7 +275,7 @@ router.get("/:_id", protectedRoute, async (request, response) => {
   }
 });
 
-// routes/contact/contacts.js — image route
+// routes/children/contacts.js — image route
 router.get("/:id/image", async (req, res) => {
   try {
     const { bucket } = await connectToDatabase();

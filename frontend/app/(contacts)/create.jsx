@@ -18,11 +18,17 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect } from "react";
+import { Picker } from "@react-native-picker/picker";
+import { useAuthStore } from "../../store/authStore";
 
 const BASE_URL =
-  Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000";
+  Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://192.168.1.238:3000";
 
 export default function Create() {
+    const { token } = useAuthStore();
+  const [selectedChild, setSelectedChild] = useState({ _id: "", name: "" });
+  const [childrenList, setChildrenList] = useState([]);
   const [name, setName] = useState("Simmigon");
   const [phone, setPhone] = useState("123456789");
   const [email, setEmail] = useState("email@email.com");
@@ -31,7 +37,22 @@ export default function Create() {
   const [imageBase64, setImageBase64] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  useEffect(() => {
+    const fetchChildren = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/v1/children/list`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        console.log("data.children:", data.children);
+        setChildrenList(data.children || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
+    fetchChildren();
+  }, []);
   // Unified image picker
   const pickImage = async (source = "library") => {
     try {
@@ -84,7 +105,7 @@ export default function Create() {
       return null;
     }
   };
-
+    
   // Wrapper to set state
   const handlePickImage = async () => {
     if (Platform.OS === "ios") {
@@ -117,6 +138,7 @@ export default function Create() {
         setImageBase64(picked.base64);
       }
     }
+    setSelectedChild({ _id: "", name: "" });
   };
 
   const handleSubmit = async () => {
@@ -130,7 +152,7 @@ export default function Create() {
       const token = await AsyncStorage.getItem("token");
       const user = JSON.parse(await AsyncStorage.getItem("user"));
 
-      const body = { owner: user._id, name, phone, email, relationship };
+      const body = { owner: user._id, name, phone, email, relationship, child:selectedChild};
 
       if (imageBase64) {
         body.fileBase64 = imageBase64;
@@ -172,6 +194,35 @@ export default function Create() {
           </View>
 
           <View style={styles.form}>
+                        <View style={styles.formGroup}>
+              <Text style={styles.label}>Select Child</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color={COLORS.textSecondary}
+                  style={styles.inputIcon}
+                />
+                <Picker
+                  selectedValue={selectedChild._id}
+                  onValueChange={(itemValue, itemIndex) =>
+                    setSelectedChild({
+                      _id: itemValue,
+                      name: childrenList[itemIndex - 1]?.name || "", // -1 because of the first placeholder
+                    })
+                  }
+                >
+                  <Picker.Item label="Select a child..." value="" />
+                  {childrenList.map((child) => (
+                    <Picker.Item
+                      key={child._id}
+                      label={child.name}
+                      value={child._id}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
             {/* Name */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Contact Name</Text>

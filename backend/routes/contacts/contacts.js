@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json } from "express";
 import protectedRoute from "../../middleware/auth.middleware.js";
 import Contacts from "../../models/Contact.js";
 import Users from "../../models/User.js";
@@ -16,8 +16,7 @@ export async function uploadBufferToGridFS(
   filename = `${Date.now()}`,
   contentType = "application/octet-stream"
 ) {
-  
- const { bucket } = await connectToDatabase(); // use shared bucket
+  const { bucket } = await connectToDatabase(); // use shared bucket
 
   return new Promise((resolve, reject) => {
     const stream = bucket.openUploadStream(filename, { contentType });
@@ -43,6 +42,7 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
       email,
       relationship,
       owner,
+      child,
       fileBase64,
       fileName,
       fileType,
@@ -53,6 +53,7 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
       name || "profile"
     )}`;
 
+    console.log("child", child);
     let imageMeta = null;
 
     // 1) If multer parsed a file (mobile FormData)
@@ -79,6 +80,7 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
       phone,
       email,
       relationship,
+      child,
       profileImage,
       imageFileId: imageMeta?.fileId || null,
       imageFileName: imageMeta?.filename || null,
@@ -149,7 +151,6 @@ router.get("/", protectedRoute, async (request, response) => {
   }
 });
 
-
 // Get all contacts for the logged-in user (non-paginated)
 router.get("/user", protectedRoute, async (request, response) => {
   await connectToDatabase();
@@ -208,7 +209,8 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
 router.put("/:_id", protectedRoute, async (req, res) => {
   await connectToDatabase();
   try {
-    const { name, phone, email, relationship, fileBase64, fileName, fileType } = req.body;
+    const { name, phone, email, relationship, fileBase64, fileName, fileType } =
+      req.body;
     const contact = await Contacts.findById(req.params._id);
 
     if (!contact) {
@@ -272,7 +274,6 @@ router.get("/:_id", protectedRoute, async (request, response) => {
 
 // routes/contact/contacts.js — image route
 router.get("/:id/image", async (req, res) => {
- 
   try {
     const { bucket } = await connectToDatabase();
     const contact = await Contacts.findById(req.params.id).select(
@@ -281,8 +282,6 @@ router.get("/:id/image", async (req, res) => {
     if (!contact || !contact.imageFileId)
       return res.status(404).json({ message: "Image not found" });
 
-    
- 
     const fileId = new mongoose.Types.ObjectId(contact.imageFileId);
     res.set(
       "Content-Type",
