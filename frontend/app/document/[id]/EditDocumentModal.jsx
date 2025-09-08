@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../../../constants/colors";
-import * as ImagePicker from "expo-image-picker";
+
 import * as DocumentPicker from "expo-document-picker";
 
 export default function EditDocumentModal({
@@ -30,10 +30,7 @@ export default function EditDocumentModal({
   const [imageBase64, setImageBase64] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState(null);
-  const [fileName, setFileName] = useState("");
-  const [fileType, setFileType] = useState("");
-  const [fileUri, setFileUri] = useState(""); // for web base64
+
   // At the top of your component
   const [documentImage, setDocumentImage] = useState(null);
 
@@ -71,7 +68,8 @@ export default function EditDocumentModal({
   const BASE_URL =
     Platform.OS === "android"
       ? "http://10.0.2.2:3000"
-      : "http://localhost:3000";
+      : "http://192.168.1.238:3000";
+
   useEffect(() => {
     if (document) {
       setTitle(document.title);
@@ -83,441 +81,122 @@ export default function EditDocumentModal({
     }
   }, [document]);
 
-  // const handleFileChange = (e) => {
-  //   const f = e.target.files[0];
-  //   if (!f) return;
-  //   const reader = new FileReader();
-  //   reader.onload = () => {
-  //     setFileUri(reader.result); // data:<mime>;base64,...
-  //     setFileName(f.name);
-  //     setFileType(f.type);
-  //   };
-  //   reader.readAsDataURL(f);
-  // };
 
-  // const handlePickFile = async () => {
-  //   let result = await DocumentPicker.getDocumentAsync({});
-  //   if (result.type === "success") {
-  //     setFile(result); // { uri, name, size, mimeType }
-  //     setFileName(result.name);
-  //     setFileType(result.mimeType || "application/octet-stream");
-  //   }
-  // };
+  const handlePick = async () => {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "text/plain",
+          "image/*", // allow images
+        ],
+        copyToCacheDirectory: true,
+      });
 
-  // /** --- PICK IMAGE --- */
-  // const pickImage = async (source = "library") => {
-  //   try {
-  //     // Request permission on mobile
-  //     if (Platform.OS !== "web") {
-  //       const perm =
-  //         source === "camera"
-  //           ? await ImagePicker.requestCameraPermissionsAsync()
-  //           : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  //       if (perm.status !== "granted") {
-  //         Alert.alert("Permission denied", `Need ${source} access`);
-  //         return;
-  //       }
-  //     }
+      if (res.type === "cancel") return;
 
-  //     const result =
-  //       source === "camera"
-  //         ? await ImagePicker.launchCameraAsync({
-  //             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //             allowsEditing: true,
-  //             aspect: [4, 3],
-  //             quality: 0.5,
-  //             base64: true,
-  //           })
-  //         : await ImagePicker.launchImageLibraryAsync({
-  //             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //             allowsEditing: true,
-  //             aspect: [4, 3],
-  //             quality: 0.5,
-  //             base64: true,
-  //           });
+      const picked = res.assets ? res.assets[0] : res;
 
-  //     if (result.canceled) return;
-  //     const picked = result.assets[0];
-  //     setImage(picked.uri);
-  //     setImageBase64(picked.base64);
-  //     setSelectedFile(null); // clear file if image chosen
-  //   } catch (err) {
-  //     console.error("pickImage error:", err);
-  //     Alert.alert("Error", "Failed to pick image");
-  //   }
-  // };
-
-  // /** --- PICK FILE --- */
-  // const pickFile = async () => {
-  //   try {
-  //     if (Platform.OS === "web") {
-  //       const input = document.createElement("input");
-  //       input.type = "file";
-  //       input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.txt,image/*"; // allow image & docs
-  //       input.onchange = (e) => {
-  //         const f = e.target.files && e.target.files[0];
-  //         if (!f) return;
-  //         const previewUri = URL.createObjectURL(f);
-  //         setSelectedFile({
-  //           uri: previewUri,
-  //           name: f.name,
-  //           type: f.type || "application/octet-stream",
-  //           isWeb: true,
-  //           file: f,
-  //         });
-  //         setImage(null);
-  //         setImageBase64(null);
-  //       };
-  //       input.click();
-  //       return;
-  //     }
-
-  //     const res = await DocumentPicker.getDocumentAsync({
-  //       type: [
-  //         "application/pdf",
-  //         "application/msword",
-  //         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  //         "application/vnd.ms-excel",
-  //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  //         "text/plain",
-  //         "image/*",
-  //       ],
-  //       copyToCacheDirectory: true,
-  //     });
-
-  //     if (!res || res.canceled) return;
-  //     const asset = res.assets ? res.assets[0] : res;
-  //     setSelectedFile({
-  //       uri: asset.uri,
-  //       name: asset.name || asset.uri.split("/").pop(),
-  //       type: asset.mimeType || asset.type || "application/octet-stream",
-  //       isWeb: false,
-  //     });
-  //     setImage(null);
-  //     setImageBase64(null);
-  //   } catch (err) {
-  //     console.error("pickFile error:", err);
-  //     Alert.alert("Error", "Failed to pick file");
-  //   }
-  // };
-
-  /** --- CHOOSE PICK --- */
-  // --- PICK FILE OR IMAGE ---
-  // const handlePick = async () => {
-  //   try {
-  //     // Use Expo DocumentPicker for all platforms
-  //     const res = await DocumentPicker.getDocumentAsync({
-  //       type: [
-  //         "application/pdf",
-  //         "application/msword",
-  //         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  //         "application/vnd.ms-excel",
-  //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  //         "text/plain",
-  //         "image/*",
-  //       ],
-  //       copyToCacheDirectory: true,
-  //     });
-
-  //     if (res.type === "cancel") return;
-
-  //     const picked = res.assets ? res.assets[0] : res;
-
-  //     // If it's an image, try to show a preview
-  //     if (
-  //       picked.mimeType?.startsWith("image/") ||
-  //       picked.uri?.endsWith(".png") ||
-  //       picked.uri?.endsWith(".jpg")
-  //     ) {
-  //       setImage(picked.uri);
-  //       setImageBase64(null); // could convert to base64 if needed
-  //     } else {
-  //       setSelectedFile({
-  //         uri: picked.uri,
-  //         name: picked.name,
-  //         type: picked.mimeType || "application/octet-stream",
-  //         isWeb: Platform.OS === "web",
-  //         file: picked.file || null,
-  //       });
-  //       setImage(null);
-  //       setImageBase64(null);
-  //     }
-  //   } catch (err) {
-  //     console.error("File pick error:", err);
-  //     Alert.alert("Error", "Failed to pick file");
-  //   }
-  // };
-  // const handlePick = async () => {
-  //   try {
-  //     const res = await DocumentPicker.getDocumentAsync({
-  //       type: [
-  //         "application/pdf",
-  //         "application/msword",
-  //         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  //         "application/vnd.ms-excel",
-  //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  //         "text/plain",
-  //         "image/*", // allow images
-  //       ],
-  //       copyToCacheDirectory: true,
-  //     });
-
-  //     if (res.type === "cancel") return;
-
-  //     const picked = res.assets ? res.assets[0] : res;
-
-  //     // Images → show preview
-  //     if (
-  //       picked.mimeType?.startsWith("image/") ||
-  //       picked.uri?.endsWith(".png") ||
-  //       picked.uri?.endsWith(".jpg") ||
-  //       picked.uri?.endsWith(".jpeg")
-  //     ) {
-  //       setImage(picked.uri);
-  //       setSelectedFile(null);
-  //     }
-  //     // Other files → keep metadata
-  //     else {
-  //       setSelectedFile({
-  //         uri: picked.uri,
-  //         name: picked.name,
-  //         type: picked.mimeType || "application/octet-stream",
-  //         isWeb: Platform.OS === "web",
-  //         file: picked.file || null, // only available on web
-  //       });
-  //       setImage(null);
-  //     }
-
-  //     setImageBase64(null); // reset base64 unless you need to encode later
-  //   } catch (err) {
-  //     console.error("File pick error:", err);
-  //     Alert.alert("Error", "Failed to pick file");
-  //   }
-  // };
-const handlePick = async () => {
-  try {
-    const res = await DocumentPicker.getDocumentAsync({
-      type: [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "text/plain",
-        "image/*", // allow images
-      ],
-      copyToCacheDirectory: true,
-    });
-
-    if (res.type === "cancel") return;
-
-    const picked = res.assets ? res.assets[0] : res;
-
-    if (
-      picked.mimeType?.startsWith("image/") ||
-      picked.uri?.endsWith(".png") ||
-      picked.uri?.endsWith(".jpg") ||
-      picked.uri?.endsWith(".jpeg")
-    ) {
-      // ✅ Web: wrap into File object
-      if (Platform.OS === "web" && picked.file) {
-        setSelectedFile({
-          uri: URL.createObjectURL(picked.file),
-          name: picked.name || "upload.jpg",
-          type: picked.mimeType || "image/jpeg",
-          isWeb: true,
-          file: picked.file,
-        });
-        setImage(picked.uri); // preview
+      if (
+        picked.mimeType?.startsWith("image/") ||
+        picked.uri?.endsWith(".png") ||
+        picked.uri?.endsWith(".jpg") ||
+        picked.uri?.endsWith(".jpeg")
+      ) {
+        // ✅ Web: wrap into File object
+        if (Platform.OS === "web" && picked.file) {
+          setSelectedFile({
+            uri: URL.createObjectURL(picked.file),
+            name: picked.name || "upload.jpg",
+            type: picked.mimeType || "image/jpeg",
+            isWeb: true,
+            file: picked.file,
+          });
+          setImage(picked.uri); // preview
+        } else {
+          // ✅ Native: just store uri/type
+          setSelectedFile({
+            uri: picked.uri,
+            name: picked.name || picked.uri.split("/").pop() || "upload.jpg",
+            type: picked.mimeType || "image/jpeg",
+            isWeb: false,
+          });
+          setImage(picked.uri);
+        }
       } else {
-        // ✅ Native: just store uri/type
+        // Non-image files
         setSelectedFile({
           uri: picked.uri,
-          name: picked.name || picked.uri.split("/").pop() || "upload.jpg",
-          type: picked.mimeType || "image/jpeg",
-          isWeb: false,
+          name: picked.name,
+          type: picked.mimeType || "application/octet-stream",
+          isWeb: Platform.OS === "web",
+          file: picked.file || null,
         });
-        setImage(picked.uri);
+        setImage(null);
       }
-    } else {
-      // Non-image files
-      setSelectedFile({
-        uri: picked.uri,
-        name: picked.name,
-        type: picked.mimeType || "application/octet-stream",
-        isWeb: Platform.OS === "web",
-        file: picked.file || null,
-      });
-      setImage(null);
+
+      setImageBase64(null);
+    } catch (err) {
+      console.error("File pick error:", err);
+      Alert.alert("Error", "Failed to pick file");
     }
+  };
 
-    setImageBase64(null);
-  } catch (err) {
-    console.error("File pick error:", err);
-    Alert.alert("Error", "Failed to pick file");
-  }
-};
 
-  /** --- SAVE --- */
-  // const handleSave = () => {
-  //   if (!title) {
-  //     Alert.alert("Error", "Title is required");
-  //     return;
-  //   }
-  //   setLoading(true);
-
-  //   const formData = new FormData();
-  //   formData.append("title", title);
-
-  //   // Image (mobile or web)
-  //   if (image) {
-  //     if (Platform.OS === "web") {
-  //       // Web: convert base64 to Blob
-  //       const byteCharacters = atob(imageBase64);
-  //       const byteNumbers = new Array(byteCharacters.length);
-  //       for (let i = 0; i < byteCharacters.length; i++) {
-  //         byteNumbers[i] = byteCharacters.charCodeAt(i);
-  //       }
-  //       const byteArray = new Uint8Array(byteNumbers);
-  //       const blob = new Blob([byteArray], { type: "image/jpeg" });
-  //       formData.append("file", blob, image.split("/").pop() || "upload.jpg");
-  //     } else {
-  //       // Mobile: use local URI
-  //       formData.append("file", {
-  //         uri: image,
-  //         name: image.split("/").pop() || "upload.jpg",
-  //         type: "image/jpeg",
-  //       });
-  //     }
-  //   } else if (selectedFile) {
-  //     if (selectedFile.isWeb && selectedFile.file) {
-  //       formData.append("file", selectedFile.file, selectedFile.name);
-  //     } else {
-  //       formData.append("file", {
-  //         uri: selectedFile.uri,
-  //         name: selectedFile.name || "upload",
-  //         type: selectedFile.type || "application/octet-stream",
-  //       });
-  //     }
-  //   }
-  //   console.log("selectedFile from EditDocument");
-  //   for (let [key, value] of formData.entries()) {
-  //     console.log(key, value);
-  //   }
-  //   onSave(formData);
-  //   setLoading(false);
-  //   onClose();
-  // };
-
-  // const handleSave = () => {
-  //   if (!title) {
-  //     Alert.alert("Error", "Title is required");
-  //     return;
-  //   }
-  //   setLoading(true);
-
-  //   const formData = new FormData();
-  //   formData.append("title", title);
-
-  //   // ---- Images from camera/gallery ----
-  //   if (image && imageBase64) {
-  //     if (Platform.OS === "web") {
-  //       // Convert base64 → Blob (web only)
-  //       const byteCharacters = atob(imageBase64);
-  //       const byteNumbers = new Array(byteCharacters.length);
-  //       for (let i = 0; i < byteCharacters.length; i++) {
-  //         byteNumbers[i] = byteCharacters.charCodeAt(i);
-  //       }
-  //       const byteArray = new Uint8Array(byteNumbers);
-  //       const blob = new Blob([byteArray], { type: "image/jpeg" });
-  //       formData.append("file", blob, image.split("/").pop() || "upload.jpg");
-  //     } else {
-  //       // React Native expects { uri, name, type }
-  //       formData.append("file", {
-  //         uri: `data:image/jpeg;base64,${imageBase64}`,
-  //         name: image.split("/").pop() || "upload.jpg",
-  //         type: "image/jpeg",
-  //       });
-  //     }
-  //   }
-
-  //   // ---- Selected file (docs / pdf) ----
-  //   else if (selectedFile) {
-  //     if (selectedFile.isWeb && selectedFile.file) {
-  //       // Web: real File object
-  //       formData.append("file", selectedFile.file, selectedFile.name);
-  //     } else {
-  //       // React Native: file picked from FS
-  //       formData.append("file", {
-  //         uri: selectedFile.uri,
-  //         name: selectedFile.name || "upload",
-  //         type: selectedFile.type || "application/octet-stream",
-  //       });
-  //     }
-  //   }
-
-  //   // Debug: log FormData contents
-  //   for (let pair of formData.entries()) {
-  //     console.log(pair[0], pair[1]);
-  //   }
-
-  //   // Send to parent
-  //   onSave(formData);
-  //   setLoading(false);
-  //   onClose()
-  // };
-
-const handleSave = () => {
-  if (!title) {
-    Alert.alert("Error", "Title is required");
-    return;
-  }
-  setLoading(true);
-
-  const formData = new FormData();
-  formData.append("title", title);
-
-  if (selectedFile) {
-    if (selectedFile.isWeb && selectedFile.file) {
-      // ✅ On web: append the real File object
-      formData.append("file", selectedFile.file, selectedFile.name);
-    } else {
-      // ✅ On native: use { uri, name, type }
-      formData.append("file", {
-        uri: selectedFile.uri,
-        name: selectedFile.name || "upload",
-        type: selectedFile.type || "application/octet-stream",
-      });
+  const handleSave = () => {
+    if (!title) {
+      Alert.alert("Error", "Title is required");
+      return;
     }
-  } else if (image) {
-    if (Platform.OS === "web" && image.startsWith("data:")) {
-      // Convert base64 string into Blob
-      const byteString = atob(image.split(",")[1]);
-      const byteArray = new Uint8Array(byteString.length);
-      for (let i = 0; i < byteString.length; i++) {
-        byteArray[i] = byteString.charCodeAt(i);
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("title", title);
+
+    if (selectedFile) {
+      if (selectedFile.isWeb && selectedFile.file) {
+        // ✅ On web: append the real File object
+        formData.append("file", selectedFile.file, selectedFile.name);
+      } else {
+        // ✅ On native: use { uri, name, type }
+        formData.append("file", {
+          uri: selectedFile.uri,
+          name: selectedFile.name || "upload",
+          type: selectedFile.type || "application/octet-stream",
+        });
       }
-      const blob = new Blob([byteArray], { type: "image/jpeg" });
-      formData.append("file", blob, "upload.jpg");
-    } else {
-      formData.append("file", {
-        uri: image,
-        name: image.split("/").pop() || "upload.jpg",
-        type: "image/jpeg",
-      });
+    } else if (image) {
+      if (Platform.OS === "web" && image.startsWith("data:")) {
+        // Convert base64 string into Blob
+        const byteString = atob(image.split(",")[1]);
+        const byteArray = new Uint8Array(byteString.length);
+        for (let i = 0; i < byteString.length; i++) {
+          byteArray[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([byteArray], { type: "image/jpeg" });
+        formData.append("file", blob, "upload.jpg");
+      } else {
+        formData.append("file", {
+          uri: image,
+          name: image.split("/").pop() || "upload.jpg",
+          type: "image/jpeg",
+        });
+      }
     }
-  }
 
-  console.log("FormData entries:");
-  for (let [key, value] of formData.entries()) {
-    console.log(key, value);
-  }
+    console.log("FormData entries:");
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
-  onSave(formData);
-  setLoading(false);
-  onClose();
-};
-
+    onSave(formData);
+    setLoading(false);
+    onClose();
+  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>

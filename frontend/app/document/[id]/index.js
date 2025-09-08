@@ -25,7 +25,7 @@ export default function Document() {
   const BASE_URL =
     Platform.OS === "android"
       ? "http://10.0.2.2:3000"
-      : "http://localhost:3000";
+      : "http://192.168.1.238:3000";
 
   // Fetch document details
   const fetchDocument = async () => {

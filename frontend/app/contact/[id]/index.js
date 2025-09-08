@@ -27,7 +27,7 @@ export default function Contact() {
   const BASE_URL =
     Platform.OS === "android"
       ? "http://10.0.2.2:3000"
-      : "http://localhost:3000";
+      : "http://192.168.1.238:3000";
 
   useEffect(() => {
     if (!id) return;

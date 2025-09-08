@@ -12,33 +12,29 @@ const UserSchema = new Schema(
     },
     name: String,
     image: String, 
-    profileImage: String, 
-    imageId: {
+    profileImage: String, // quick-access URL (optional)
+
+    // ✅ add these three fields to match your PUT route
+    imageFileId: {
       type: Schema.Types.ObjectId,
       ref: 'uploads.files',
     },
+    imageFileName: String,
+    imageContentType: String,
+
     password: {
       type: String,
       required: [true, 'Password is required'],
     },
-    contacts: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Contact',
-      },
-    ],
-    documents: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Document',
-      },
-    ],
+    contacts: [{ type: Schema.Types.ObjectId, ref: 'Contact' }],
+    documents: [{ type: Schema.Types.ObjectId, ref: 'Document' }],
     refreshToken: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
   },
   { timestamps: true }
 );
+
 
 UserSchema.methods.comparePassword = async function (userPassword) {
     return await bcrypt.compare(userPassword, this.password)

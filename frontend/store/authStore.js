@@ -3,20 +3,58 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useContactStore } from "./contactStore";
 import { Platform } from "react-native";
 
-const HOST =
+const API_URL =
   Platform.OS === "android"
-    ? "10.0.2.2:3000" // Android emulator
-    : "192.168.1.238:3000"; // iOS / Web / physical devices
-
-const API_URL = `http://${HOST}`;
+    ? "http://10.0.2.2:3000" // Android emulator
+    : "http://192.168.1.238:3000"; // iOS / Web / physical devices
 
 export const useAuthStore = create((set, get) => ({
   user: null,
   token: null,
   isLoading: false,
+  updateProfileImage: async (imageUri) => {
+    const { token, user } = get();
+
+    try {
+      const formData = new FormData();
+      formData.append("profileImage", {
+        uri: imageUri,
+        name: "profile.jpg",
+        type: "image/jpeg",
+      });
+
+      const response = await fetch(`${API_URL}/api/v1/users/profile-image`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`, // if your API uses JWT auth
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to update image");
+
+      await AsyncStorage.setItem("user", JSON.stringify(data.user));
+      set({ user: data.user });
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      console.error("Update profile image failed:", error);
+      return { success: false, error: error.message };
+    }
+  },
+  
+  setUser: async (user) => {
+    try {
+      await AsyncStorage.setItem("user", JSON.stringify(user));
+      set({ user });
+    } catch (err) {
+      console.error("Failed to persist user:", err);
+    }
+  },
 
   register: async (name, email, password) => {
-    
     set({ isLoading: true });
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/register`, {
@@ -28,7 +66,6 @@ export const useAuthStore = create((set, get) => ({
       });
 
       const data = await response.json();
-      
 
       if (!response.ok) throw new Error(data.message || "Something went wrong");
 
@@ -129,12 +166,11 @@ export const useAuthStore = create((set, get) => ({
     set({ user: null, token: null });
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
-
   },
 
   forgotPassword: async (email) => {
     set({ isLoading: true });
-    
+
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
         method: "POST",
@@ -156,7 +192,6 @@ export const useAuthStore = create((set, get) => ({
     }
   },
   resetPassword: async (token, newPassword) => {
-
     set({ isLoading: true });
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/reset-password`, {

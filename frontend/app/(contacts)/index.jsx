@@ -14,6 +14,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../../store/authStore";
 import styles from "../../assets/styles/home.styles";
 import COLORS from "../../constants/colors";
@@ -37,11 +38,7 @@ export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchTimeout = useRef(null);
 
-  const fetchContacts = async (
-    pageNumber = 1,
-    refresh = false,
-    search = ""
-  ) => {
+  const fetchContacts = async (pageNumber = 1, refresh = false, search = "") => {
     try {
       if (refresh) setRefreshing(true);
       else if (pageNumber === 1) setLoading(true);
@@ -53,16 +50,13 @@ export default function Contacts() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Failed to fetch contacts");
+      if (!response.ok) throw new Error(data.message || "Failed to fetch contacts");
 
       if (refresh || pageNumber === 1) setContacts(data.contacts);
       else {
         setContacts((prev) => {
           const existingIds = new Set(prev.map((c) => c._id));
-          const newContacts = data.contacts.filter(
-            (c) => !existingIds.has(c._id)
-          );
+          const newContacts = data.contacts.filter((c) => !existingIds.has(c._id));
           return [...prev, ...newContacts];
         });
       }
@@ -77,39 +71,32 @@ export default function Contacts() {
     }
   };
 
-  // Fetch on mount
   useEffect(() => {
     fetchContacts(1, true, searchQuery);
   }, []);
 
-  // Refresh on focus
   useFocusEffect(
     useCallback(() => {
       fetchContacts(1, true, searchQuery);
     }, [])
   );
 
-  // Debounced search
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
     searchTimeout.current = setTimeout(() => {
       fetchContacts(1, true, searchQuery);
-    }, 500); // 500ms debounce
-
+    }, 500);
     return () => clearTimeout(searchTimeout.current);
   }, [searchQuery]);
 
   const handleLoadMore = () => {
-    if (hasMore && !loading && !refreshing)
-      fetchContacts(page + 1, false, searchQuery);
+    if (hasMore && !loading && !refreshing) fetchContacts(page + 1, false, searchQuery);
   };
 
   const handleRefresh = () => fetchContacts(1, true, searchQuery);
 
   const handleCall = (phoneNumber) => {
-    if (phoneNumber)
-      Linking.openURL(`tel:${phoneNumber.replace(/[^0-9+]/g, "")}`);
+    if (phoneNumber) Linking.openURL(`tel:${phoneNumber.toString().replace(/[^0-9+]/g, "")}`);
   };
 
   const renderItem = ({ item }) => (
@@ -129,10 +116,14 @@ export default function Contacts() {
 
         <View style={styles.contactInfo}>
           <Text style={styles.contactName} numberOfLines={1}>
-            {item.name || "Unnamed Contact"}
+            {item.name ? String(item.name) : "Unnamed Contact"}
           </Text>
           <Text style={styles.contactSub} numberOfLines={1}>
-            {item.phone || item.email || "-"}
+            {item.phone
+              ? String(item.phone)
+              : item.email
+              ? String(item.email)
+              : "-"}
           </Text>
         </View>
       </TouchableOpacity>
@@ -146,45 +137,46 @@ export default function Contacts() {
   if (loading && page === 1) return <Loader size="large" />;
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={[styles.input, { margin: 10 }]}
-        placeholder="Search by title or file name"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <FlatList
-        data={contacts}
-        renderItem={renderItem}
-        keyExtractor={(item) => item?._id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.1}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Contacts</Text>
-          </View>
-        }
-        ListFooterComponent={
-          hasMore && contacts.length > 0 ? (
-            <ActivityIndicator style={{ marginVertical: 10 }} />
-          ) : null
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons
-              name="book-outline"
-              size={60}
-              color={COLORS.textSecondary}
-            />
-            <Text style={styles.emptyText}>No Contacts</Text>
-          </View>
-        }
-      />
-    </View>
+<View style={{ flex: 1 }}>
+  <TextInput
+    style={[styles.input, { margin: 10 }]}
+    placeholder="Search by title or file name"
+    value={searchQuery}
+    onChangeText={setSearchQuery}
+  />
+
+  <SafeAreaView style={{ flex: 1 }}>
+    <FlatList
+      data={contacts}
+      renderItem={renderItem}
+      keyExtractor={(item) => item?._id}
+      style={Platform.OS === "web" ? { height: "80vh" } : { flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+      showsVerticalScrollIndicator
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.1}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Contacts</Text>
+        </View>
+      }
+      ListFooterComponent={
+        hasMore && contacts.length > 0 ? (
+          <ActivityIndicator style={{ marginVertical: 10 }} />
+        ) : null
+      }
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+          <Ionicons name="book-outline" size={60} color={COLORS.textSecondary} />
+          <Text style={styles.emptyText}>No Contacts</Text>
+        </View>
+      }
+    />
+  </SafeAreaView>
+</View>
+
   );
 }
