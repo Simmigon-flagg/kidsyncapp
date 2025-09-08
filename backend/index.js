@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth/authRoutes.js";
 import usersRoutes from "./routes/users/users.js";
+import childrenRoutes from "./routes/children/children.js";
 import contactsRoutes from "./routes/contacts/contacts.js";
 import documentsRoutes from "./routes/documents/documents.js";
 import morgan from "morgan";
@@ -26,6 +27,7 @@ app.use(
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/children", childrenRoutes);
 app.use("/api/v1/contacts", contactsRoutes);
 app.use("/api/v1/documents", documentsRoutes);
 

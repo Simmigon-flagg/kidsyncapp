@@ -26,6 +26,7 @@ const UserSchema = new Schema(
       type: String,
       required: [true, 'Password is required'],
     },
+    children: [{ type: Schema.Types.ObjectId, ref: 'Children' }],
     contacts: [{ type: Schema.Types.ObjectId, ref: 'Contact' }],
     documents: [{ type: Schema.Types.ObjectId, ref: 'Document' }],
     refreshToken: String,

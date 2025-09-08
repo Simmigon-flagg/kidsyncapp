@@ -1,0 +1,27 @@
+###
+POST http://localhost:3000/api/v1/children
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhhYzBiYTFiODA5NWU5MGZjYzQ2OGExIiwiaWF0IjoxNzU2MTU0Mjk2LCJleHAiOjE3NTc0NTAyOTZ9.Q5wjDgsVj7iRwQQgvWMiihW64fMZL2j8TV1FZpRWh_M
+
+{
+    "owner": "68ac0ba1b8095e90fcc468a1", 
+    "name": "Simmigon",
+    "email": "email@email.com",
+    "phone": "123456789",
+    "relationship": "Uncle"
+}
+
+###
+GET http://192.168.1.238:3000/api/v1/children?page=1&limit=5
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhiOWZlYmUwZmJmM2I4NWQ2NThmN2E1IiwiaWF0IjoxNzU3MjA0OTkzLCJleHAiOjE3NTg1MDA5OTN9.bo-2p_0OZnnX-dS2aBKwPEcgszdF8xV-aXk2eDwMewk
+
+
+###
+GET http://localhost:3000/api/v1/children
+Content-Type: application/json
+
+{
+    "email":"phil@gmail.com",
+    "password":"123"
+}

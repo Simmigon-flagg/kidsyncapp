@@ -1,6 +1,6 @@
 import express from "express";
 import protectedRoute from "../../middleware/auth.middleware.js";
-import Contacts from "../../models/Contact.js";
+import Children from "../../models/Children.js";
 import Users from "../../models/User.js";
 import { connectToDatabase } from "../../lib/database.js";
 import multer from "multer";
@@ -16,8 +16,7 @@ export async function uploadBufferToGridFS(
   filename = `${Date.now()}`,
   contentType = "application/octet-stream"
 ) {
-  
- const { bucket } = await connectToDatabase(); // use shared bucket
+  const { bucket } = await connectToDatabase(); // use shared bucket
 
   return new Promise((resolve, reject) => {
     const stream = bucket.openUploadStream(filename, { contentType });
@@ -36,18 +35,10 @@ export async function uploadBufferToGridFS(
 
 router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
   await connectToDatabase();
+  console.log(req.body);
   try {
-    const {
-      name,
-      phone,
-      email,
-      relationship,
-      owner,
-      fileBase64,
-      fileName,
-      fileType,
-    } = req.body;
-
+    const { name, dateOfBirth, owner, fileBase64, fileName, fileType } =
+      req.body;
     // generate profileImage fallback
     const profileImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
       name || "profile"
@@ -59,7 +50,7 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
     if (req.file && req.file.buffer) {
       imageMeta = await uploadBufferToGridFS(
         req.file.buffer,
-        req.file.originalname || `${name || "contact"}.png`,
+        req.file.originalname || `${name || "children"}.png`,
         req.file.mimetype || "image/png"
       );
     }
@@ -68,17 +59,15 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
       const buffer = Buffer.from(fileBase64, "base64");
       imageMeta = await uploadBufferToGridFS(
         buffer,
-        fileName || `${name || "contact"}.png`,
+        fileName || `${name || "children"}.png`,
         fileType || "image/png"
       );
     }
 
-    const contact = await Contacts.create({
+    const children = await Children.create({
       owner,
       name,
-      phone,
-      email,
-      relationship,
+      dateOfBirth,
       profileImage,
       imageFileId: imageMeta?.fileId || null,
       imageFileName: imageMeta?.filename || null,
@@ -88,13 +77,13 @@ router.post("/", protectedRoute, upload.single("file"), async (req, res) => {
     // add to user
     const user = await Users.findById(owner);
     if (user) {
-      user.contacts.push(contact._id);
+      user.children.push(children._id);
       await user.save();
     }
 
-    return res.status(201).json({ contact });
+    return res.status(201).json({ children });
   } catch (err) {
-    console.error("Error in contact POST route:", err);
+    console.error("Error in child POST route:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -109,58 +98,57 @@ router.get("/", protectedRoute, async (request, response) => {
     const search = request.query.search?.trim();
 
     // 1. Get the logged-in user with their contacts array
-    const user = await Users.findById(request.user._id).select("contacts");
+    const user = await Users.findById(request.user._id).select("children");
     if (!user) {
       return response.status(404).json({ message: "User not found" });
     }
 
     // 2. Build query
-    let query = { _id: { $in: user.contacts } };
+    let query = { _id: { $in: user.children } };
 
     if (search) {
       const regex = new RegExp(search, "i"); // case-insensitive
       query = {
         ...query,
-        $or: [{ name: regex }, { phone: regex }, { email: regex }],
+        $or: [{ name: regex }],
       };
     }
 
     // 3. Query contacts
-    const contacts = await Contacts.find(query)
+    const children = await Children.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate("owner", "name profileImage");
 
     // 4. Count for pagination
-    const totalContacts = await Contacts.countDocuments(query);
-    const totalPages = Math.ceil(totalContacts / limit);
+    const totalChildren = await Children.countDocuments(query);
+    const totalPages = Math.ceil(totalChildren / limit);
 
     return response.status(200).json({
-      contacts,
+      children,
       currentPage: page,
-      totalContacts,
+      totalChildren,
       totalPages,
       hasMore: page < totalPages,
     });
   } catch (error) {
-    console.error("Error in contacts route", error);
+    console.error("Error in children route", error);
     return response.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 // Get all contacts for the logged-in user (non-paginated)
 router.get("/user", protectedRoute, async (request, response) => {
   await connectToDatabase();
   try {
-    const contacts = await Contacts.find({ owner: request.user._id })
+    const children = await Children.find({ owner: request.user._id })
       .sort({ createdAt: -1 })
       .populate("owner", "name");
 
-    return response.status(200).json(contacts);
+    return response.status(200).json(children);
   } catch (error) {
-    console.error("Error in contacts/user route", error);
+    console.error("Error in children/user route", error);
     return response.status(500).json({ message: "Internal server error" });
   }
 });
@@ -174,21 +162,21 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
     const user = await Users.findById(request.user._id);
 
     if (!user) {
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    const children = await Children.findById(_id);
+
+    if (!children) {
       return response.status(404).json({ message: "Contact not found" });
     }
 
-    const contact = await Contacts.findById(_id);
-
-    if (!contact) {
-      return response.status(404).json({ message: "Contact not found" });
-    }
-
-    if (contact.owner.toString() !== request.user._id.toString()) {
+    if (children.owner.toString() !== request.user._id.toString()) {
       return response.status(401).json({ message: "Unauthorized" });
     }
 
-    user.contacts = user.contacts.filter(
-      (contact) => contact._id.toString() !== _id
+    user.children = user.children.filter(
+      (children) => children._id.toString() !== _id
     );
     request.user = user;
 
@@ -196,9 +184,9 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
 
     return response
       .status(200)
-      .json({ message: "Contact deleted successfully" });
+      .json({ message: "Children deleted successfully" });
   } catch (error) {
-    console.error("Error deleting contact", error);
+    console.error("Error deleting children", error);
     return response.status(500).json({ message: "Internal server error" });
   }
 });
@@ -208,22 +196,19 @@ router.delete("/:_id", protectedRoute, async (request, response) => {
 router.put("/:_id", protectedRoute, async (req, res) => {
   await connectToDatabase();
   try {
-    const { name, phone, email, relationship, fileBase64, fileName, fileType } = req.body;
-    const contact = await Contacts.findById(req.params._id);
+    const { name, fileBase64, fileName, fileType } = req.body;
+    const children = await Children.findById(req.params._id);
 
-    if (!contact) {
+    if (!children) {
       return res.status(404).json({ message: "Contact not found" });
     }
 
-    if (contact.owner.toString() !== req.user._id.toString()) {
+    if (children.owner.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     // Update text fields
-    if (name !== undefined) contact.name = name;
-    if (phone !== undefined) contact.phone = phone;
-    if (email !== undefined) contact.email = email;
-    if (relationship !== undefined) contact.relationship = relationship;
+    if (name !== undefined) children.name = name;
 
     // If a new image was sent, upload it to GridFS
     if (fileBase64) {
@@ -235,15 +220,15 @@ router.put("/:_id", protectedRoute, async (req, res) => {
         fileType || "image/png"
       );
 
-      contact.imageFileId = imageMeta.fileId;
-      contact.imageFileName = imageMeta.filename;
-      contact.imageContentType = imageMeta.contentType;
+      children.imageFileId = imageMeta.fileId;
+      children.imageFileName = imageMeta.filename;
+      children.imageContentType = imageMeta.contentType;
     }
 
-    await contact.save();
-    return res.status(200).json({ contact });
+    await children.save();
+    return res.status(200).json({ children });
   } catch (error) {
-    console.error("Error updating contact", error);
+    console.error("Error updating children", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -253,40 +238,37 @@ router.get("/:_id", protectedRoute, async (request, response) => {
   await connectToDatabase();
 
   try {
-    const contact = await Contacts.findById(request.params._id);
+    const children = await Children.findById(request.params._id);
 
-    if (!contact) {
+    if (!children) {
       return response.status(404).json({ message: "Contact not found" });
     }
 
-    if (contact.owner.toString() !== request.user._id.toString()) {
+    if (children.owner.toString() !== request.user._id.toString()) {
       return response.status(401).json({ message: "Unauthorized" });
     }
 
-    return response.status(200).json({ contact });
+    return response.status(200).json({ children });
   } catch (error) {
-    console.error("Error updating contact", error);
+    console.error("Error updating children", error);
     return response.status(500).json({ message: "Internal server error" });
   }
 });
 
 // routes/contact/contacts.js — image route
 router.get("/:id/image", async (req, res) => {
- 
   try {
     const { bucket } = await connectToDatabase();
-    const contact = await Contacts.findById(req.params.id).select(
+    const children = await Children.findById(req.params.id).select(
       "imageFileId imageContentType"
     );
-    if (!contact || !contact.imageFileId)
+    if (!children || !children.imageFileId)
       return res.status(404).json({ message: "Image not found" });
 
-    
- 
-    const fileId = new mongoose.Types.ObjectId(contact.imageFileId);
+    const fileId = new mongoose.Types.ObjectId(children.imageFileId);
     res.set(
       "Content-Type",
-      contact.imageContentType || "application/octet-stream"
+      children.imageContentType || "application/octet-stream"
     );
 
     const downloadStream = bucket.openDownloadStream(fileId);

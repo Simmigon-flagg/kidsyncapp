@@ -128,6 +128,17 @@ export default function RootLayout() {
             }}
           />
           <Drawer.Screen
+            name="(children)"
+            options={{
+              drawerLabel: "Children",
+              title: "Children",
+              drawerItemStyle: { display: show },
+              drawerIcon: ({ size, color }) => (
+                <Ionicons name="body-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Drawer.Screen
             name="(profile)"
             options={{
               drawerLabel: "Profile",
